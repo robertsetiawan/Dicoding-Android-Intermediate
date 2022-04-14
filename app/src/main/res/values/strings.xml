@@ -13,7 +13,12 @@
     <string name="register_now">Daftar Sekarang!</string>
     <string name="success_registration">Registrasi Berhasil</string>
     <string name="more">…selengkapnya</string>
-    <string name="open_camera">Buka kamera</string>
+    <string name="open_camera">Kamera</string>
     <string name="upload_file">Upload file</string>
     <string name="add_story">Tambah Cerita</string>
+    <string name="description">Deskripsi</string>
+    <string name="preview_image">Preview Gambar</string>
+    <string name="gallery">Gallery</string>
+    <string name="preview">Preview</string>
+    <string name="error_caption">Descripsi harus diisi</string>
 </resources>

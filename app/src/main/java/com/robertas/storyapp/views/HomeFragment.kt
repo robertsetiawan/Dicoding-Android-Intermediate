@@ -1,11 +1,11 @@
 package com.robertas.storyapp.views
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -19,7 +19,6 @@ import com.robertas.storyapp.databinding.FragmentHomeBinding
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.viewmodels.StoryViewModel
-import com.robertas.storyapp.views.components.BottomSheetAction
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -32,7 +31,7 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
 
     private lateinit var navController: NavController
 
-    private val storyViewModel by viewModels<StoryViewModel>()
+    private val storyViewModel by activityViewModels<StoryViewModel>()
 
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
 
@@ -68,6 +67,7 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
                 is NetworkResult.Loading -> toggleSwipeRefresh(false)
 
                 is NetworkResult.Success -> {
+
                     result.data?.let { storyListAdapter.submitList(it) }
 
                     toggleSwipeRefresh(true)
@@ -120,21 +120,12 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
     override fun onClick(view: View) {
         when (view.id) {
             R.id.floating_btn -> {
-                if (childFragmentManager.findFragmentByTag(BottomSheetAction.TAG) == null) {
+                val actionToPreviewFragment = HomeFragmentDirections.actionHomeFragmentToPreviewFragment(null)
 
-                    BottomSheetAction().show(childFragmentManager, BottomSheetAction.TAG)
-                }
+                navController.navigate(actionToPreviewFragment)
             }
 
-            R.id.camera_btn -> {
-                val actionToCameraFragment =
-                    HomeFragmentDirections.actionHomeFragmentToCameraFragment()
-
-                navController.navigate(actionToCameraFragment)
-            }
-
-            R.id.upload_btn -> {
-            }
+            else -> return
         }
     }
 }

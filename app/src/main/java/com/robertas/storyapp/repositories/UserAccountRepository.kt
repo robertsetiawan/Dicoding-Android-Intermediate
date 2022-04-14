@@ -43,7 +43,7 @@ class UserAccountRepository @Inject constructor(
         }
     }
 
-    override suspend fun register(name: String, email: String, password: String): Boolean? {
+    override suspend fun register(name: String, email: String, password: String): Boolean {
         val response: Response<UserResponse>
 
         withContext(Dispatchers.IO){
@@ -52,14 +52,10 @@ class UserAccountRepository @Inject constructor(
 
         when (response.code()) {
             201 -> {
-                val apiResponse = response.body()
-
-                if (apiResponse?.error == true){
-
-                    throw Exception(apiResponse.message)
-
+                return if (response.body()?.error == false) {
+                    true
                 } else {
-                    return apiResponse?.error
+                    throw Exception(response.body()?.message)
                 }
             }
 

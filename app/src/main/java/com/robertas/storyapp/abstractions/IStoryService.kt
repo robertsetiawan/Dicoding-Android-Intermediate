@@ -28,6 +28,7 @@ interface IStoryService {
     @Multipart
     @POST("stories")
     suspend fun postStory(
+        @Header("Authorization") token: String,
         @Part file: MultipartBody.Part,
         @Part("description") description: RequestBody,
     ): Response<StoryResponse>

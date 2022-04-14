@@ -15,10 +15,14 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.NavController
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
+import com.robertas.storyapp.StoryApp
 import com.robertas.storyapp.databinding.FragmentCameraBinding
 import com.robertas.storyapp.utils.createFile
+import dagger.hilt.android.internal.Contexts
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -33,6 +37,8 @@ class CameraFragment : Fragment(), View.OnClickListener {
     private var imageCapture: ImageCapture? = null
 
     private lateinit var cameraExecutor: ExecutorService
+
+    private lateinit var navController: NavController
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,6 +63,8 @@ class CameraFragment : Fragment(), View.OnClickListener {
         binding?.captureBtn?.setOnClickListener(this)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
+
+        navController = findNavController()
     }
 
     private val requestPermission =
@@ -128,7 +136,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
 
-        val photoFile = createFile(Application())
+        val photoFile = createFile(activity?.application as StoryApp)
 
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
@@ -137,7 +145,9 @@ class CameraFragment : Fragment(), View.OnClickListener {
             ContextCompat.getMainExecutor(requireContext()),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    TODO("Not yet implemented")
+                    val actionToPreviewFragment = CameraFragmentDirections.actionCameraFragmentToPreviewFragment(photoFile)
+
+                    navController.navigate(actionToPreviewFragment)
                 }
 
                 override fun onError(exception: ImageCaptureException) {
