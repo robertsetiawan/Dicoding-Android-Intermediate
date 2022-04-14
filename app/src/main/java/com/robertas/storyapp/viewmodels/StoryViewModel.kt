@@ -17,7 +17,9 @@ class StoryViewModel @Inject constructor(
     private val userStoryRepository: StoryRepository
 ): ViewModel(), INavigation {
 
+    private var _rotationDegree = 0f
 
+    val rotationDegree get() = _rotationDegree
 
     private val _loadStoryState = MutableLiveData<NetworkResult<List<Story>?>>()
 
@@ -26,6 +28,14 @@ class StoryViewModel @Inject constructor(
     private val _uploadStoryState = MutableLiveData<NetworkResult<Boolean>>()
 
     val uploadStoryState get() = _uploadStoryState
+
+    fun incrementRotation(){
+        _rotationDegree += 90f
+    }
+
+    fun resetRotation(){
+        _rotationDegree = 0f
+    }
 
     fun getAllStories() {
         _loadStoryState.value = NetworkResult.Loading
@@ -47,7 +57,7 @@ class StoryViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val error = userStoryRepository.postStory(file, description)
+                val error = userStoryRepository.postStory(file, description, _rotationDegree)
 
                 _uploadStoryState.value = NetworkResult.Success(error)
             } catch (e: Exception){
@@ -55,6 +65,7 @@ class StoryViewModel @Inject constructor(
             }
         }
     }
+
 
     override fun doneNavigating() {
         _uploadStoryState.value = NetworkResult.Loading

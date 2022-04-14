@@ -1,7 +1,6 @@
 package com.robertas.storyapp.views
 
 import android.Manifest
-import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,7 +21,6 @@ import com.robertas.storyapp.R
 import com.robertas.storyapp.StoryApp
 import com.robertas.storyapp.databinding.FragmentCameraBinding
 import com.robertas.storyapp.utils.createFile
-import dagger.hilt.android.internal.Contexts
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -61,6 +59,8 @@ class CameraFragment : Fragment(), View.OnClickListener {
         }
 
         binding?.captureBtn?.setOnClickListener(this)
+
+        binding?.switchBtn?.setOnClickListener(this)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -127,7 +127,12 @@ class CameraFragment : Fragment(), View.OnClickListener {
         when (view.id) {
             R.id.capture_btn -> takePhoto()
 
-            R.id.switch_btn -> {}
+            R.id.switch_btn -> {
+                cameraSelector =
+                    if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) CameraSelector.DEFAULT_FRONT_CAMERA
+                    else CameraSelector.DEFAULT_BACK_CAMERA
+                startCamera()
+            }
 
             else -> return
         }
@@ -145,7 +150,8 @@ class CameraFragment : Fragment(), View.OnClickListener {
             ContextCompat.getMainExecutor(requireContext()),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    val actionToPreviewFragment = CameraFragmentDirections.actionCameraFragmentToPreviewFragment(photoFile)
+                    val actionToPreviewFragment =
+                        CameraFragmentDirections.actionCameraFragmentToPreviewFragment(photoFile)
 
                     navController.navigate(actionToPreviewFragment)
                 }

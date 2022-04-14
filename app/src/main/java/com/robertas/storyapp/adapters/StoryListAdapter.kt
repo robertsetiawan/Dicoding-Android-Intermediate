@@ -76,6 +76,7 @@ class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCal
             parsedDate?.time?.let { binding.timeTv.text = formatTime(it, "dd-MMM-yyyy hh:mm:ss") }
 
             if (story.description.length > 50) {
+
                 binding.smallDescTv.text = story.description.substring(0, 14)
 
                 binding.moreTv.visibility = View.VISIBLE

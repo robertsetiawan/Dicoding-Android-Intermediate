@@ -7,7 +7,7 @@ import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.network.StoryNetwork
 import com.robertas.storyapp.models.network.StoryResponse
-import com.robertas.storyapp.utils.reduceFileImage
+import com.robertas.storyapp.utils.reduceThenRotateFileImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -25,7 +25,7 @@ class UserStoryRepository @Inject constructor(
     override val domainMapper: IDomainMapper<StoryNetwork, Story>,
     override val pref: SharedPreferences
 ) : StoryRepository() {
-    override suspend fun postStory(file: File, description: String): Boolean {
+    override suspend fun postStory(file: File, description: String, rotation: Float): Boolean {
 
         val token = pref.getString(UserAccountRepository.USER_TOKEN_KEY, "")
 
@@ -41,7 +41,7 @@ class UserStoryRepository @Inject constructor(
 
             withContext(Dispatchers.IO){
 
-                val reducedFile = reduceFileImage(file)
+                val reducedFile = reduceThenRotateFileImage(file, rotation)
 
                 val desc = description.toRequestBody("text/plain".toMediaType())
 

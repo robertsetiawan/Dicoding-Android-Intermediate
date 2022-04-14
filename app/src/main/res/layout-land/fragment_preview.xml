@@ -19,14 +19,13 @@
 
     <ImageView
         android:id="@+id/preview_img"
-        android:layout_width="0dp"
+        android:layout_width="300dp"
         android:layout_height="0dp"
         android:layout_marginStart="36dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="36dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
         android:contentDescription="@string/preview_image"
-        app:layout_constraintBottom_toTopOf="@id/camera_btn"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar_fragment"
         app:srcCompat="@drawable/ic_baseline_image" />
@@ -35,22 +34,21 @@
         android:id="@+id/camera_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
         android:text="@string/open_camera"
         android:textAlignment="textStart"
         android:textAppearance="@android:style/TextAppearance.Material.Body1"
         android:textColor="@color/black"
         app:icon="@drawable/ic_baseline_camera_24"
         app:iconTint="@color/black"
-        app:layout_constraintEnd_toStartOf="@id/gallery_btn"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/preview_img" />
+        app:layout_constraintEnd_toStartOf="@+id/gallery_btn"
+        app:layout_constraintStart_toEndOf="@+id/preview_img"
+        app:layout_constraintTop_toTopOf="@id/gallery_btn" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/gallery_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="8dp"
         android:text="@string/gallery"
         android:textAlignment="textStart"
         android:textAppearance="@android:style/TextAppearance.Material.Body1"
@@ -59,20 +57,20 @@
         app:iconTint="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/camera_btn"
-        app:layout_constraintTop_toBottomOf="@id/preview_img" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar_fragment" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/desc_tv"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="36dp"
         android:layout_marginBottom="32dp"
         app:layout_constraintBottom_toTopOf="@+id/rotate_btn"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/preview_img"
         app:layout_constraintTop_toBottomOf="@id/camera_btn">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -83,7 +81,7 @@
             android:hint="@string/description"
             android:importantForAutofill="no"
             android:inputType="textMultiLine"
-            android:lines="5"
+            android:lines="2"
             android:scrollbars="vertical"
             android:selectAllOnFocus="true" />
 
@@ -91,9 +89,9 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/rotate_btn"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
+        android:layout_marginStart="16dp"
         android:layout_marginEnd="36dp"
         android:layout_marginBottom="16dp"
         android:text="@string/rotate"
@@ -103,23 +101,22 @@
         app:iconTint="@color/black"
         app:layout_constraintBottom_toTopOf="@id/stack_layout"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toEndOf="@+id/preview_img" />
 
     <FrameLayout
         android:id="@+id/stack_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
+        android:layout_marginEnd="36dp"
+        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="@+id/rotate_btn">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/upload_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="36dp"
-            android:layout_marginEnd="36dp"
             android:text="@string/upload_file"
             android:textAppearance="@android:style/TextAppearance.Material.Body1"
             android:textColor="@color/black"

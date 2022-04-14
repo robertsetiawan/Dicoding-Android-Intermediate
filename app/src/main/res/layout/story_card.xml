@@ -73,10 +73,9 @@
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/time_tv">
+            app:layout_constraintTop_toBottomOf="@id/small_desc_tv">
 
             <TextView
                 android:id="@+id/full_desc_tv"
@@ -94,11 +93,11 @@
             android:layout_marginBottom="8dp"
             android:paddingStart="24dp"
             android:paddingEnd="0dp"
-            tools:text="@string/error_email"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            app:layout_constraintBottom_toTopOf="@id/expanded_layout"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/small_desc_tv" />
+            app:layout_constraintTop_toBottomOf="@id/expanded_layout"
+            tools:text="@string/error_email" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -1,6 +1,7 @@
 package com.robertas.storyapp.views
 
 import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_GET_CONTENT
 import android.graphics.BitmapFactory
@@ -11,10 +12,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -25,9 +28,11 @@ import com.google.android.material.textfield.TextInputEditText
 import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentPreviewBinding
 import com.robertas.storyapp.models.enums.NetworkResult
+import com.robertas.storyapp.utils.rotateBitmap
 import com.robertas.storyapp.utils.uriToFile
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.io.File
 
 
@@ -46,7 +51,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
     private val storyViewModel by activityViewModels<StoryViewModel>()
 
-    private var descEditText: TextInputEditText ?= null
+    private var descEditText: TextInputEditText? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -72,6 +77,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         binding?.uploadBtn?.setOnClickListener(this)
 
         binding?.galleryBtn?.setOnClickListener(this)
+
+        binding?.rotateBtn?.setOnClickListener(this)
     }
 
     private fun bindParamToFragment() {
@@ -98,9 +105,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
             setNavigationOnClickListener { navController.navigateUp() }
         }
 
-
-        val uploadObserver = Observer<NetworkResult<Boolean?>>{ result ->
-            when(result){
+        val uploadObserver = Observer<NetworkResult<Boolean?>> { result ->
+            when (result) {
                 is NetworkResult.Loading -> {}
 
                 is NetworkResult.Success -> {
@@ -143,6 +149,12 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         _binding = null
 
         descEditText = null
+
+        myPhoto = null
+
+        storyViewModel.resetRotation()
+
+        hideKeyBoard()
     }
 
     private fun startGallery() {
@@ -194,7 +206,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
                     descEditText?.error = null
 
-                    if (myPhoto != null){
+                    if (myPhoto != null) {
 
                         storyViewModel.uploadImage(myPhoto!!, descEditText?.text.toString())
 
@@ -211,8 +223,32 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
             }
 
+            R.id.rotate_btn -> {
+
+                myPhoto?.let { file ->
+
+                    storyViewModel.incrementRotation()
+
+                    lifecycleScope.launch {
+                        val rotated = rotateBitmap(file, storyViewModel.rotationDegree)
+
+                        binding?.previewImg?.setImageBitmap(rotated)
+                    }
+                }
+            }
+
             else -> return
         }
+    }
+
+    private fun hideKeyBoard() {
+        if (requireActivity().currentFocus == null) {
+            return
+        }
+        val inputMethodManager =
+            requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+        inputMethodManager.hideSoftInputFromWindow(requireActivity().currentFocus!!.windowToken, 0)
     }
 
 }
