@@ -70,6 +70,6 @@
     <fragment
         android:id="@+id/settingFragment"
         android:name="com.robertas.storyapp.views.SettingFragment"
-        android:label="fragment_setting"
+        android:label="@string/settings"
         tools:layout="@layout/fragment_setting" />
 </navigation>

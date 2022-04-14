@@ -7,6 +7,7 @@ import android.content.Intent.ACTION_GET_CONTENT
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -27,7 +29,9 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentPreviewBinding
+import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.NetworkResult
+import com.robertas.storyapp.utils.createTempFile
 import com.robertas.storyapp.utils.rotateBitmap
 import com.robertas.storyapp.utils.uriToFile
 import com.robertas.storyapp.viewmodels.StoryViewModel
@@ -50,6 +54,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
     private lateinit var navController: NavController
 
     private val storyViewModel by activityViewModels<StoryViewModel>()
+
+    private lateinit var currentPhotoPath: String
 
     private var descEditText: TextInputEditText? = null
 
@@ -181,14 +187,58 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         }
     }
 
+    private fun startTakePhoto() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+
+        val packageManager = activity?.packageManager
+
+        packageManager?.let {
+            intent.resolveActivity(it)
+
+            createTempFile(requireContext()).also { file ->
+                val photoURI: Uri = FileProvider.getUriForFile(
+                    requireActivity(),
+                    "com.robertas.storyapp",
+                    file
+                )
+                currentPhotoPath = file.absolutePath
+
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+
+                launcherIntentCamera.launch(intent)
+            }
+        }
+    }
+
+    private val launcherIntentCamera = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (it.resultCode == RESULT_OK) {
+            val myFile = File(currentPhotoPath)
+
+            myPhoto = myFile
+
+            val result = BitmapFactory.decodeFile(myPhoto?.path)
+
+            binding?.previewImg?.setImageBitmap(result)
+        }
+    }
+
     override fun onClick(view: View) {
         when (view.id) {
 
             R.id.camera_btn -> {
-                val actionToCameraFragment =
-                    PreviewFragmentDirections.actionPreviewFragmentToCameraFragment()
 
-                navController.navigate(actionToCameraFragment)
+                when (storyViewModel.getCameraMode()) {
+                    CameraMode.CAMERA_X -> {
+                        val actionToCameraFragment =
+                            PreviewFragmentDirections.actionPreviewFragmentToCameraFragment()
+
+                        navController.navigate(actionToCameraFragment)
+                    }
+
+                    CameraMode.SYSTEM -> startTakePhoto()
+                }
             }
 
             R.id.gallery_btn -> {

@@ -2,8 +2,10 @@ package com.robertas.storyapp.views
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -23,7 +25,8 @@ import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnClickListener {
+class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnClickListener,
+    Toolbar.OnMenuItemClickListener {
 
     private var _binding: FragmentHomeBinding? = null
 
@@ -48,6 +51,8 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
         super.onViewCreated(view, savedInstanceState)
 
         swipeRefreshLayout = binding?.swipeRefresh
+
+        binding?.floatingBtn?.setOnClickListener(this)
 
         setupNavigation()
 
@@ -102,7 +107,9 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
             setNavigationOnClickListener { navController.navigateUp() }
         }
 
-        binding?.floatingBtn?.setOnClickListener(this)
+        binding?.toolbarFragment?.inflateMenu(R.menu.settings_menu)
+
+        binding?.toolbarFragment?.setOnMenuItemClickListener(this)
     }
 
     override fun onDestroyView() {
@@ -126,6 +133,19 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
             }
 
             else -> return
+        }
+    }
+
+    override fun onMenuItemClick(item: MenuItem): Boolean {
+        return when(item.itemId){
+            R.id.settings -> {
+                val actionToSettingsFragment = HomeFragmentDirections.actionHomeFragmentToSettingFragment()
+
+                navController.navigate(actionToSettingsFragment)
+
+                true
+            }
+            else -> false
         }
     }
 }

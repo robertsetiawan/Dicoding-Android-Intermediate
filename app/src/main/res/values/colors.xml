@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <color name="black">#FF000000</color>
-
-
-    <color name="primary">#ffffff</color>
-    <color name="primary_dark">#cccccc</color>
-
-    <color name="secondary">#dd2c00</color>
-    <color name="secondary_light">#ff6434</color>
-    <color name="secondary_dark">#a30000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="dark_blue_200">#161B22</color>
+    <color name="dark_blue_500">#0D1013</color>
+    <color name="zeus">#221d16</color>
+    <color name="iron_200">#e8e8e9</color>
+    <color name="iron_500">#bababa</color>
+    <color name="desert_storm_200">#e9e9e8</color>
+    <color name="desert_storm_500">#DCDCDB</color>
 </resources>

@@ -22,4 +22,5 @@
     <string name="preview">Preview</string>
     <string name="error_caption">Descripsi harus diisi</string>
     <string name="rotate">Rotasi</string>
+    <string name="settings">Pengaturan</string>
 </resources>

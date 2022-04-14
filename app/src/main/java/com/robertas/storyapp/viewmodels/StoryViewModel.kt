@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.robertas.storyapp.abstractions.INavigation
 import com.robertas.storyapp.abstractions.StoryRepository
+import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StoryViewModel @Inject constructor(
-    private val userStoryRepository: StoryRepository
+    private val userStoryRepository: StoryRepository,
+
+    private val userAccountRepository: UserRepository
 ): ViewModel(), INavigation {
 
     private var _rotationDegree = 0f
@@ -65,6 +68,10 @@ class StoryViewModel @Inject constructor(
             }
         }
     }
+
+    fun getCameraMode() = userAccountRepository.getCameraMode()
+
+    fun setCameraMode(mode: String){ userAccountRepository.setCameraMode(mode) }
 
 
     override fun doneNavigating() {

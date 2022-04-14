@@ -5,6 +5,7 @@ import com.robertas.storyapp.abstractions.IDomainMapper
 import com.robertas.storyapp.abstractions.IStoryService
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.User
+import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.network.UserNetwork
 import com.robertas.storyapp.models.network.UserResponse
 import kotlinx.coroutines.Dispatchers
@@ -21,8 +22,8 @@ class UserAccountRepository @Inject constructor(
     override suspend fun postLogin(email: String, password: String): User? {
         val response: Response<UserResponse>
 
-        withContext(Dispatchers.IO){
-            response= apiService.postLogin(email = email, password = password)
+        withContext(Dispatchers.IO) {
+            response = apiService.postLogin(email = email, password = password)
         }
 
         when (response.code()) {
@@ -46,7 +47,7 @@ class UserAccountRepository @Inject constructor(
     override suspend fun register(name: String, email: String, password: String): Boolean {
         val response: Response<UserResponse>
 
-        withContext(Dispatchers.IO){
+        withContext(Dispatchers.IO) {
             response = apiService.register(email = email, password = password, name = name)
         }
 
@@ -72,7 +73,7 @@ class UserAccountRepository @Inject constructor(
     }
 
     override fun setLoggedInUser(user: User) {
-        pref.edit().apply{
+        pref.edit().apply {
 
             putString(USER_ID_KEY, user.userId)
 
@@ -94,11 +95,46 @@ class UserAccountRepository @Inject constructor(
         return jsonObj.getString("message").orEmpty()
     }
 
+    override fun getCameraMode(): String {
+
+        return when (pref.getString(CAMERA_KEY, "")) {
+            "CameraX" -> CameraMode.CAMERA_X
+
+            "System" -> CameraMode.SYSTEM
+
+            else -> CameraMode.CAMERA_X
+        }
+    }
+
+    override fun getLanguageMode(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun setCameraMode(mode: String) {
+        pref.edit().putString(
+            CAMERA_KEY, when (mode) {
+                "CameraX" -> CameraMode.CAMERA_X
+
+                "System" -> CameraMode.SYSTEM
+
+                else -> CameraMode.CAMERA_X
+            }
+        ).apply()
+    }
+
+    override fun setLanguageMode(mode: String) {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         const val USER_TOKEN_KEY = "user_token_key"
 
         const val USER_NAME_KEY = "user_name_key"
 
         const val USER_ID_KEY = "user_id_key"
+
+        const val CAMERA_KEY = "camera_key"
+
+        const val LANGUAGE_KEY = "language_key"
     }
 }
