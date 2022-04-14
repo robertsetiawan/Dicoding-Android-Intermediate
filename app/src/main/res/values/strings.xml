@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Story App</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="email">Email</string>
+    <string name="error_email">Format email tidak sesuai</string>
+    <string name="error_name">Nama harus diisi</string>
+    <string name="error_password">Panjang password 6 karakter</string>
+    <string name="name">Nama</string>
+    <string name="password">Password</string>
+    <string name="register">Daftar</string>
+    <string name="login">Login</string>
+    <string name="ask_have_account">Belum punya akun?</string>
+    <string name="register_now">Daftar Sekarang!</string>
+    <string name="success_registration">Registrasi Berhasil</string>
+    <string name="more">…selengkapnya</string>
+    <string name="open_camera">Buka kamera</string>
+    <string name="upload_file">Upload file</string>
+    <string name="add_story">Tambah Cerita</string>
+</resources>
