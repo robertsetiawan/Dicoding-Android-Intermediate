@@ -59,6 +59,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
     private var descEditText: TextInputEditText? = null
 
+    private var rotationDegree = 0f
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -158,8 +160,6 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
         myPhoto = null
 
-        storyViewModel.resetRotation()
-
         hideKeyBoard()
     }
 
@@ -258,7 +258,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
                     if (myPhoto != null) {
 
-                        storyViewModel.uploadImage(myPhoto!!, descEditText?.text.toString())
+                        storyViewModel.uploadImage(myPhoto!!, descEditText?.text.toString(), rotationDegree)
 
                         binding?.uploadBtn?.visibility = View.GONE
 
@@ -277,10 +277,10 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
                 myPhoto?.let { file ->
 
-                    storyViewModel.incrementRotation()
+                    incrementRotation()
 
                     lifecycleScope.launch {
-                        val rotated = rotateBitmap(file, storyViewModel.rotationDegree)
+                        val rotated = rotateBitmap(file, rotationDegree)
 
                         binding?.previewImg?.setImageBitmap(rotated)
                     }
@@ -290,6 +290,11 @@ class PreviewFragment : Fragment(), View.OnClickListener {
             else -> return
         }
     }
+
+    private fun incrementRotation(){
+        rotationDegree += 90f
+    }
+
 
     private fun hideKeyBoard() {
         if (requireActivity().currentFocus == null) {
