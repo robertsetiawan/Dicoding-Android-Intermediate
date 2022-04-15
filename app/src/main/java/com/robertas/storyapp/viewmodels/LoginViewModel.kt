@@ -43,4 +43,14 @@ class LoginViewModel @Inject constructor(
     }
 
     fun isUserLoggedIn() = userAccountRepository.isUserLoggedIn()
+
+    fun logOut() {
+        userAccountRepository.logOut()
+    }
+
+    fun getLanguageMode() = userAccountRepository.getLanguageMode()
+
+    fun setLanguageMode(languageMode: String) {
+        userAccountRepository.setLanguageMode(languageMode)
+    }
 }

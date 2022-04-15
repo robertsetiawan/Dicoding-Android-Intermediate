@@ -22,7 +22,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="36dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="36dp"
         android:contentDescription="@string/preview_image"
         app:layout_constraintBottom_toTopOf="@id/camera_btn"
@@ -70,6 +70,8 @@
         android:layout_marginTop="32dp"
         android:layout_marginEnd="36dp"
         android:layout_marginBottom="32dp"
+        app:boxStrokeColor="@color/orange"
+        app:hintTextColor="@color/darker_grey"
         app:layout_constraintBottom_toTopOf="@+id/rotate_btn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -77,6 +79,8 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/desc_et"
+            android:textColor="@color/black"
+            android:textCursorDrawable="@null"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="top"

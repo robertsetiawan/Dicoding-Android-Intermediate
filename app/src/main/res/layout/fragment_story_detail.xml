@@ -29,7 +29,6 @@
                 android:id="@+id/story_img"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
-                android:transitionName="picture"
                 app:srcCompat="@drawable/ic_baseline_image" />
 
             <TextView
@@ -40,7 +39,6 @@
                 android:paddingStart="24dp"
                 android:paddingEnd="24dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                android:transitionName="name"
                 tools:text="@string/app_name" />
 
             <TextView
@@ -50,7 +48,6 @@
                 android:layout_marginTop="4dp"
                 android:paddingStart="24dp"
                 android:paddingEnd="24dp"
-                android:transitionName="desc"
                 tools:text="@string/error_password" />
 
             <TextView
@@ -60,8 +57,7 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="8dp"
                 android:paddingStart="24dp"
-                android:paddingEnd="0dp"
-                android:transitionName="time"
+                android:paddingEnd="24dp"
                 tools:text="@string/error_email" />
 
         </LinearLayout>

@@ -2,14 +2,13 @@ package com.robertas.storyapp.views
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ProgressBar
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.NavController
@@ -72,21 +71,30 @@ class RegisterFragment : Fragment(), View.OnClickListener {
                 is NetworkResult.Loading -> {}
 
                 is NetworkResult.Success -> {
+
+                    binding?.apply {
+                        registerBtn.visibility = View.VISIBLE
+
+                        progressLoading.visibility = View.GONE
+                    }
+
                     binding?.root?.let { it -> Snackbar.make(it, getString(R.string.success_registration), Snackbar.LENGTH_SHORT).show() }
 
-                    toggleRegisterButton(false)
+                    val actionToLoginFragment = RegisterFragmentDirections.actionRegisterFragmentToLoginFragment()
 
-                    toggleLoadingBar(false)
+                    navController.navigate(actionToLoginFragment)
 
                     registerViewModel.doneNavigating()
                 }
 
                 is NetworkResult.Error -> {
+                    binding?.apply {
+                        registerBtn.visibility = View.VISIBLE
+
+                        progressLoading.visibility = View.GONE
+                    }
+
                     binding?.root?.let { it -> Snackbar.make(it, result.message, Snackbar.LENGTH_SHORT).show() }
-
-                    toggleRegisterButton(false)
-
-                    toggleLoadingBar(false)
 
                     registerViewModel.doneNavigating()
                 }
@@ -97,22 +105,10 @@ class RegisterFragment : Fragment(), View.OnClickListener {
     }
 
 
-    private fun toggleRegisterButton(isEnabled: Boolean){
-        registerButton?.isEnabled = !isEnabled
-    }
-
-    private fun toggleLoadingBar(isGone: Boolean){
-        if (!isGone){
-            loadingProgressBar?.visibility = View.GONE
-        } else {
-            loadingProgressBar?.visibility = View.VISIBLE
-        }
-    }
-
     private fun bindViewToFragment(){
         registerButton = binding?.registerBtn
 
-        loadingProgressBar = binding?.loadingProgress
+        loadingProgressBar = binding?.progressLoading
 
         emailEditText = binding?.emailEt
 
@@ -153,12 +149,15 @@ class RegisterFragment : Fragment(), View.OnClickListener {
         when(view.id){
             R.id.register_btn -> {
 
+                hideKeyBoard()
+
                 if (isEntryValid()){
-                    Log.i(RegisterFragment::class.java.simpleName, "input valid")
 
-                    toggleRegisterButton(true)
+                    binding?.apply {
+                        registerBtn.visibility = View.GONE
 
-                    toggleLoadingBar(true)
+                        progressLoading.visibility = View.VISIBLE
+                    }
 
                     registerViewModel.register(nameEditText?.text.toString(), emailEditText?.text.toString(), passwordEditText?.text.toString())
 

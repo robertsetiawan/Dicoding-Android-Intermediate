@@ -1,12 +1,9 @@
 package com.robertas.storyapp.views
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -50,13 +47,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (allPermissionsGranted()) {
-
-            startCamera()
-        } else {
-
-            requestPermission.launch(REQUIRED_PERMISSIONS)
-        }
+        startCameraX()
 
         binding?.captureBtn?.setOnClickListener(this)
 
@@ -67,18 +58,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
         navController = findNavController()
     }
 
-    private val requestPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { permission ->
-            if (permission == true) {
-                startCamera()
-            } else {
-                binding?.root?.let {
-                    Snackbar.make(it, "Tidak mendapatkan permission", Snackbar.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-    private fun startCamera() {
+    private fun startCameraX() {
         val cameraFuture = ProcessCameraProvider.getInstance(requireContext())
 
         cameraFuture.addListener({
@@ -103,17 +83,14 @@ class CameraFragment : Fragment(), View.OnClickListener {
             } catch (e: Exception) {
 
                 binding?.root?.let {
-                    Snackbar.make(it, "Gagal menjalankan kamera", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(it, getString(R.string.failed_to_start_camera), Snackbar.LENGTH_SHORT).show()
                 }
             }
 
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
-        requireContext(),
-        REQUIRED_PERMISSIONS
-    ) == PackageManager.PERMISSION_GRANTED
+
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -131,7 +108,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
                 cameraSelector =
                     if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) CameraSelector.DEFAULT_FRONT_CAMERA
                     else CameraSelector.DEFAULT_BACK_CAMERA
-                startCamera()
+                startCameraX()
             }
 
             else -> return
@@ -158,14 +135,10 @@ class CameraFragment : Fragment(), View.OnClickListener {
 
                 override fun onError(exception: ImageCaptureException) {
                     binding?.root?.let {
-                        Snackbar.make(it, "Gagal mengambil gambar", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(it, getString(R.string.failed_to_take_picture), Snackbar.LENGTH_SHORT).show()
                     }
                 }
             }
         )
-    }
-
-    companion object {
-        private const val REQUIRED_PERMISSIONS = Manifest.permission.CAMERA
     }
 }

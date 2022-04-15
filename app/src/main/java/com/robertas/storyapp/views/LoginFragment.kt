@@ -14,6 +14,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentLoginBinding
 import com.robertas.storyapp.models.domain.User
@@ -67,21 +68,39 @@ class LoginFragment : Fragment(), View.OnClickListener {
                 is NetworkResult.Loading -> {}
 
                 is NetworkResult.Error -> {
+
                     Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
 
-                    toggleLoginButton(false)
+                    binding?.apply {
+                        registerBtn.isEnabled = true
 
-                    toggleLoadingBar(false)
+                        loginBtn.visibility = View.VISIBLE
+
+                        progressLoading.visibility = View.GONE
+                    }
 
                     loginViewModel.doneNavigating()
                 }
 
                 is NetworkResult.Success -> {
+
+                    binding?.apply {
+                        registerBtn.isEnabled = true
+
+                        loginBtn.visibility = View.VISIBLE
+
+                        progressLoading.visibility = View.GONE
+                    }
+
                     val actionToHomeFragment = LoginFragmentDirections.actionLoginFragmentToHomeFragment()
+
+                    binding?.root?.let {
+                        Snackbar.make(it, getString(R.string.welcome, result.data?.name), Snackbar.LENGTH_SHORT).show()
+                    }
 
                     navController.navigate(actionToHomeFragment)
 
-                    toggleLoadingBar(false)
+
 
                     loginViewModel.doneNavigating()
                 }
@@ -94,18 +113,6 @@ class LoginFragment : Fragment(), View.OnClickListener {
             val actionToHomeFragment = LoginFragmentDirections.actionLoginFragmentToHomeFragment()
 
             navController.navigate(actionToHomeFragment)
-        }
-    }
-
-    private fun toggleLoginButton(isEnabled: Boolean){
-        loginButton?.isEnabled = !isEnabled
-    }
-
-    private fun toggleLoadingBar(isGone: Boolean){
-        if (!isGone){
-            loadingProgressBar?.visibility = View.GONE
-        } else {
-            loadingProgressBar?.visibility = View.VISIBLE
         }
     }
 
@@ -126,10 +133,15 @@ class LoginFragment : Fragment(), View.OnClickListener {
             R.id.register_btn -> navController.navigate(LoginFragmentDirections.actionLoginFragmentToRegisterFragment())
 
             R.id.login_btn -> {
+                hideKeyBoard()
 
-                toggleLoginButton(true)
+                binding?.apply {
+                    registerBtn.isEnabled = false
 
-                toggleLoadingBar(true)
+                    loginBtn.visibility = View.GONE
+
+                    progressLoading.visibility = View.VISIBLE
+                }
 
                 loginViewModel.login(binding?.emailEt?.text.toString(), binding?.passwordEt?.text.toString())
             }

@@ -1,4 +1,4 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?><resources>
     <string name="app_name">Story App</string>
     <string name="email">Email</string>
     <string name="error_email">Format email tidak sesuai</string>

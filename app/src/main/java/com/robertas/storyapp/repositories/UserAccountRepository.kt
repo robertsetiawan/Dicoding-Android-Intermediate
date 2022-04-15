@@ -6,6 +6,7 @@ import com.robertas.storyapp.abstractions.IStoryService
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.User
 import com.robertas.storyapp.models.enums.CameraMode
+import com.robertas.storyapp.models.enums.LanguageMode
 import com.robertas.storyapp.models.network.UserNetwork
 import com.robertas.storyapp.models.network.UserResponse
 import kotlinx.coroutines.Dispatchers
@@ -107,7 +108,13 @@ class UserAccountRepository @Inject constructor(
     }
 
     override fun getLanguageMode(): String {
-        TODO("Not yet implemented")
+        return when (pref.getString(LANGUAGE_KEY, "")) {
+            "id" -> LanguageMode.ID
+
+            "en" -> LanguageMode.EN
+
+            else -> LanguageMode.DEFAULT
+        }
     }
 
     override fun setCameraMode(mode: String) {
@@ -123,7 +130,15 @@ class UserAccountRepository @Inject constructor(
     }
 
     override fun setLanguageMode(mode: String) {
-        TODO("Not yet implemented")
+        pref.edit().putString(
+            LANGUAGE_KEY, when (mode) {
+                "id" -> LanguageMode.ID
+
+                "en" -> LanguageMode.EN
+
+                else -> LanguageMode.DEFAULT
+            }
+        ).apply()
     }
 
     companion object {

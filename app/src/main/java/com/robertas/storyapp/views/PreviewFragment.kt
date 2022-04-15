@@ -1,20 +1,22 @@
 package com.robertas.storyapp.views
 
+import android.Manifest
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_GET_CONTENT
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -89,6 +91,49 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         binding?.rotateBtn?.setOnClickListener(this)
     }
 
+    private fun requestCameraPermission() {
+        if (allPermissionsGranted()) {
+
+            startCamera()
+        } else {
+
+            requestPermission.launch(REQUIRED_PERMISSIONS)
+        }
+    }
+
+    private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
+        requireContext(),
+        REQUIRED_PERMISSIONS
+    ) == PackageManager.PERMISSION_GRANTED
+
+    private val requestPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { permission ->
+            if (permission == true) {
+                startCamera()
+            } else {
+                binding?.root?.let {
+                    Snackbar.make(
+                        it,
+                        getString(R.string.can_not_receive_permission),
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+
+    private fun startCamera() {
+        when (storyViewModel.getCameraMode()) {
+            CameraMode.CAMERA_X -> {
+                val actionToCameraFragment =
+                    PreviewFragmentDirections.actionPreviewFragmentToCameraFragment()
+
+                navController.navigate(actionToCameraFragment)
+            }
+
+            CameraMode.SYSTEM -> startCameraSystem()
+        }
+    }
+
     private fun bindParamToFragment() {
 
         if (navArgs.picture != null) {
@@ -119,8 +164,20 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
                 is NetworkResult.Success -> {
 
+                    binding?.apply {
+                        rotateBtn.isEnabled = true
+
+                        uploadBtn.visibility = View.VISIBLE
+
+                        progressLoading.visibility = View.GONE
+                    }
+
                     binding?.root?.let {
-                        Snackbar.make(it, "Story berhasil dibuat", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(
+                            it,
+                            getString(R.string.success_to_create_story),
+                            Snackbar.LENGTH_SHORT
+                        ).show()
                     }
 
                     storyViewModel.getAllStories()
@@ -135,13 +192,22 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                 }
 
                 is NetworkResult.Error -> {
-                    binding?.root?.let {
-                        Snackbar.make(it, "Gagal membuat story", Snackbar.LENGTH_SHORT).show()
+                    binding?.apply {
+                        rotateBtn.isEnabled = true
+
+                        uploadBtn.visibility = View.VISIBLE
+
+                        progressLoading.visibility = View.GONE
                     }
 
-                    binding?.uploadBtn?.visibility = View.VISIBLE
+                    binding?.root?.let {
+                        Snackbar.make(
+                            it,
+                            getString(R.string.failed_to_create_story),
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    }
 
-                    binding?.progressLoading?.visibility = View.GONE
 
                     storyViewModel.doneNavigating()
                 }
@@ -160,6 +226,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
         myPhoto = null
 
+        rotationDegree = 0f
+
         hideKeyBoard()
     }
 
@@ -170,7 +238,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
         intent.type = "image/*"
 
-        val chooser = Intent.createChooser(intent, "Choose a Picture")
+        val chooser = Intent.createChooser(intent, getString(R.string.choose_a_picture))
 
         launcherIntentGallery.launch(chooser)
     }
@@ -187,7 +255,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    private fun startTakePhoto() {
+    private fun startCameraSystem() {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
         val packageManager = activity?.packageManager
@@ -227,26 +295,13 @@ class PreviewFragment : Fragment(), View.OnClickListener {
     override fun onClick(view: View) {
         when (view.id) {
 
-            R.id.camera_btn -> {
+            R.id.camera_btn -> requestCameraPermission()
 
-                when (storyViewModel.getCameraMode()) {
-                    CameraMode.CAMERA_X -> {
-                        val actionToCameraFragment =
-                            PreviewFragmentDirections.actionPreviewFragmentToCameraFragment()
-
-                        navController.navigate(actionToCameraFragment)
-                    }
-
-                    CameraMode.SYSTEM -> startTakePhoto()
-                }
-            }
-
-            R.id.gallery_btn -> {
-                Log.i(PreviewFragment::class.java.simpleName, "button gallery clicked")
-                startGallery()
-            }
+            R.id.gallery_btn -> startGallery()
 
             R.id.upload_btn -> {
+
+                hideKeyBoard()
 
                 if (TextUtils.isEmpty(descEditText?.text)) {
 
@@ -258,15 +313,27 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
                     if (myPhoto != null) {
 
-                        storyViewModel.uploadImage(myPhoto!!, descEditText?.text.toString(), rotationDegree)
+                        storyViewModel.uploadImage(
+                            myPhoto!!,
+                            descEditText?.text.toString(),
+                            rotationDegree
+                        )
 
-                        binding?.uploadBtn?.visibility = View.GONE
+                        binding?.apply {
+                            rotateBtn.isEnabled = false
 
-                        binding?.progressLoading?.visibility = View.VISIBLE
+                            uploadBtn.visibility = View.GONE
+
+                            progressLoading.visibility = View.VISIBLE
+                        }
 
                     } else {
                         binding?.root?.let {
-                            Snackbar.make(it, "Gambar tidak tersedia", Snackbar.LENGTH_SHORT).show()
+                            Snackbar.make(
+                                it,
+                                getString(R.string.picture_unavailable),
+                                Snackbar.LENGTH_SHORT
+                            ).show()
                         }
                     }
                 }
@@ -291,7 +358,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    private fun incrementRotation(){
+    private fun incrementRotation() {
         rotationDegree += 90f
     }
 
@@ -304,6 +371,10 @@ class PreviewFragment : Fragment(), View.OnClickListener {
             requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
         inputMethodManager.hideSoftInputFromWindow(requireActivity().currentFocus!!.windowToken, 0)
+    }
+
+    companion object {
+        private const val REQUIRED_PERMISSIONS = Manifest.permission.CAMERA
     }
 
 }

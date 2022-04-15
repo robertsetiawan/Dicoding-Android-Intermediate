@@ -62,58 +62,102 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
         setupStoryListObserver()
     }
 
-    private fun toggleSwipeRefresh(isLoading: Boolean) {
-        swipeRefreshLayout?.isRefreshing = !isLoading
-    }
 
     private fun setupStoryListObserver() {
 
         val storyListAdapter = StoryListAdapter()
 
-        storyListAdapter.onItemClickListener = object: IOnItemClickListener<Story, StoryCardBinding> {
-            override fun onClick(item: Story, binding: StoryCardBinding) {
-                val actionToDetailFragment = HomeFragmentDirections.actionHomeFragmentToStoryDetailFragment(item)
+        storyListAdapter.onItemClickListener =
+            object : IOnItemClickListener<Story, StoryCardBinding> {
+                override fun onClick(item: Story, binding: StoryCardBinding) {
+                    val actionToDetailFragment =
+                        HomeFragmentDirections.actionHomeFragmentToStoryDetailFragment(item)
 
-                val extras = FragmentNavigatorExtras(
-                    Pair(binding.storyImg, "picture"),
+                    val extras = FragmentNavigatorExtras(
+                        binding.storyImg to "picture_${item.id}",
 
-                    Pair(binding.nameTv, "name"),
+                        binding.nameTv to "name_${item.id}",
 
-                    Pair(binding.smallDescTv, "desc"),
+                        binding.smallDescTv to "desc_${item.id}",
 
-                    Pair(binding.timeTv, "time")
-                )
+                        binding.timeTv to "time_${item.id}"
+                    )
 
-                navController.navigate(actionToDetailFragment, extras)
+                    navController.navigate(actionToDetailFragment, extras)
+                }
             }
-        }
 
         val storyListObserver = Observer<NetworkResult<List<Story>?>> { result ->
             when (result) {
-                is NetworkResult.Loading -> toggleSwipeRefresh(false)
+                is NetworkResult.Loading -> binding?.swipeRefresh?.isRefreshing = true
 
                 is NetworkResult.Success -> {
 
-                    result.data?.let { storyListAdapter.submitList(it) }
+                    result.data?.let {
+                        if (it.isNotEmpty()) {
+                            switchRefreshAndList(false)
 
-                    toggleSwipeRefresh(true)
+                            storyListAdapter.submitList(it)
+                        } else {
+                            switchRefreshAndList(true)
+                        }
+                    }
                 }
-
                 is NetworkResult.Error -> {
                     binding?.root?.let {
                         Snackbar.make(it, result.message, Snackbar.LENGTH_SHORT).show()
                     }
 
-                    toggleSwipeRefresh(true)
+                    binding?.storyList?.adapter?.itemCount?.let {
+                        if (it == 0) {
+                            switchRefreshAndList(true)
+                        } else {
+                            switchRefreshAndList(false)
+                        }
+                    }
                 }
             }
         }
 
         storyViewModel.loadStoryState.observe(viewLifecycleOwner, storyListObserver)
 
-        binding?.storyList?.adapter = storyListAdapter
+        binding?.storyList?.apply {
+            adapter = storyListAdapter
+
+            postponeEnterTransition()
+
+            viewTreeObserver
+                .addOnPreDrawListener {
+                    startPostponedEnterTransition()
+                    true
+                }
+        }
 
         swipeRefreshLayout?.setOnRefreshListener(this)
+    }
+
+    private fun switchRefreshAndList(isEmptyList: Boolean) {
+
+        if (isEmptyList) {
+
+            binding?.apply {
+                swipeRefreshLayout?.isRefreshing = false
+
+                storyList.visibility = View.GONE
+
+                emptyLayout.visibility = View.VISIBLE
+            }
+
+        } else {
+
+            binding?.apply {
+                swipeRefresh.isRefreshing = false
+
+                storyList.visibility = View.VISIBLE
+
+                emptyLayout.visibility = View.GONE
+            }
+        }
     }
 
     private fun setupNavigation() {
@@ -148,7 +192,8 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
     override fun onClick(view: View) {
         when (view.id) {
             R.id.floating_btn -> {
-                val actionToPreviewFragment = HomeFragmentDirections.actionHomeFragmentToPreviewFragment(null)
+                val actionToPreviewFragment =
+                    HomeFragmentDirections.actionHomeFragmentToPreviewFragment(null)
 
                 navController.navigate(actionToPreviewFragment)
             }
@@ -158,9 +203,10 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
     }
 
     override fun onMenuItemClick(item: MenuItem): Boolean {
-        return when(item.itemId){
+        return when (item.itemId) {
             R.id.settings -> {
-                val actionToSettingsFragment = HomeFragmentDirections.actionHomeFragmentToSettingFragment()
+                val actionToSettingsFragment =
+                    HomeFragmentDirections.actionHomeFragmentToSettingFragment()
 
                 navController.navigate(actionToSettingsFragment)
 

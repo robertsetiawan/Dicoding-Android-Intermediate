@@ -63,6 +63,15 @@ class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCal
         }
 
         fun bind(story: Story) {
+
+            binding.storyImg.transitionName = "picture_${story.id}"
+
+            binding.nameTv.transitionName = "name_${story.id}"
+
+            binding.smallDescTv.transitionName = "desc_${story.id}"
+
+            binding.timeTv.transitionName = "time_${story.id}"
+
             binding.storyImg.contentDescription = story.description
 
             binding.storyImg.setOnClickListener{ onItemClickListener.onClick(story, binding) }
