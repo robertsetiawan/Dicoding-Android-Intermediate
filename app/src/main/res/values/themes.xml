@@ -2,12 +2,12 @@
     <!-- Base application theme. -->
     <style name="Theme.StoryApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/dark_blue_200</item>
-        <item name="colorPrimaryVariant">@color/dark_blue_500</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorPrimaryVariant">@color/light_grey</item>
+        <item name="colorOnPrimary">@color/orange</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/zeus</item>
-        <item name="colorSecondaryVariant">@color/zeus</item>
+        <item name="colorSecondary">@color/orange</item>
+        <item name="colorSecondaryVariant">@color/darker_orange</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status & Navigation bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorOnPrimary</item>
