@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
     }
 
+    @Suppress("DEPRECATION")
     private fun setupLanguage() {
         val config = resources.configuration
 
