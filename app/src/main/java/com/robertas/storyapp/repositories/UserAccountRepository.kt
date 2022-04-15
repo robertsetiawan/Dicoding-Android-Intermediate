@@ -19,7 +19,7 @@ class UserAccountRepository @Inject constructor(
     override val pref: SharedPreferences,
     override val domainMapper: IDomainMapper<UserNetwork, User>
 ) : UserRepository() {
-    override suspend fun postLogin(email: String, password: String): User? {
+    override suspend fun login(email: String, password: String): User? {
         val response: Response<UserResponse>
 
         withContext(Dispatchers.IO) {
