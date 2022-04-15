@@ -166,8 +166,6 @@ class CameraFragment : Fragment(), View.OnClickListener {
     }
 
     companion object {
-
         private const val REQUIRED_PERMISSIONS = Manifest.permission.CAMERA
-
     }
 }

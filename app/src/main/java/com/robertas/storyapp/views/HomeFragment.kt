@@ -10,14 +10,17 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.NavController
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
+import com.robertas.storyapp.abstractions.IOnItemClickListener
 import com.robertas.storyapp.adapters.StoryListAdapter
 import com.robertas.storyapp.databinding.FragmentHomeBinding
+import com.robertas.storyapp.databinding.StoryCardBinding
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.viewmodels.StoryViewModel
@@ -66,6 +69,24 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
     private fun setupStoryListObserver() {
 
         val storyListAdapter = StoryListAdapter()
+
+        storyListAdapter.onItemClickListener = object: IOnItemClickListener<Story, StoryCardBinding> {
+            override fun onClick(item: Story, binding: StoryCardBinding) {
+                val actionToDetailFragment = HomeFragmentDirections.actionHomeFragmentToStoryDetailFragment(item)
+
+                val extras = FragmentNavigatorExtras(
+                    Pair(binding.storyImg, "picture"),
+
+                    Pair(binding.nameTv, "name"),
+
+                    Pair(binding.smallDescTv, "desc"),
+
+                    Pair(binding.timeTv, "time")
+                )
+
+                navController.navigate(actionToDetailFragment, extras)
+            }
+        }
 
         val storyListObserver = Observer<NetworkResult<List<Story>?>> { result ->
             when (result) {

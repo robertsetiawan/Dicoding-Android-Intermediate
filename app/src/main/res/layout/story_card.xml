@@ -22,6 +22,7 @@
             android:id="@+id/story_img"
             android:layout_width="0dp"
             android:layout_height="200dp"
+            android:transitionName="picture"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -35,6 +36,7 @@
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:transitionName="name"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/story_img"
             tools:text="@string/app_name" />
@@ -47,6 +49,7 @@
             android:paddingStart="24dp"
             android:paddingEnd="0dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:transitionName="desc"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/name_tv"
             tools:text="@string/error_email" />
@@ -94,6 +97,7 @@
             android:paddingStart="24dp"
             android:paddingEnd="0dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:transitionName="time"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/expanded_layout"

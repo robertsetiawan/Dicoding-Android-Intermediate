@@ -19,6 +19,8 @@ private const val FILENAME_FORMAT = "dd-MMM-yyyy"
 
 private const val DATE_TIME_FORMAT = "yyyy-MM-dd'T'hh:mm:ss.SSS"
 
+const val DATETIME_UI_FORMAT = "dd-MMM-yyyy hh:mm:ss"
+
 val timeStamp: String = formatTime(System.currentTimeMillis(), FILENAME_FORMAT)
 
 fun parseTime(unformattedTime: String): Date?{

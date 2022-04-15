@@ -10,12 +10,16 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.robertas.storyapp.R
+import com.robertas.storyapp.abstractions.IOnItemClickListener
 import com.robertas.storyapp.databinding.StoryCardBinding
 import com.robertas.storyapp.models.domain.Story
+import com.robertas.storyapp.utils.DATETIME_UI_FORMAT
 import com.robertas.storyapp.utils.formatTime
 import com.robertas.storyapp.utils.parseTime
 
 class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCallBack) {
+
+    lateinit var onItemClickListener: IOnItemClickListener<Story, StoryCardBinding>
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding: StoryCardBinding =
@@ -37,7 +41,7 @@ class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCal
         override fun areContentsTheSame(oldItem: Story, newItem: Story) = oldItem == newItem
     }
 
-    class ViewHolder(private val binding: StoryCardBinding) :
+    inner class ViewHolder(private val binding: StoryCardBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         private fun showExpandedLayout(story: Story){
@@ -61,6 +65,8 @@ class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCal
         fun bind(story: Story) {
             binding.storyImg.contentDescription = story.description
 
+            binding.storyImg.setOnClickListener{ onItemClickListener.onClick(story, binding) }
+
             Glide.with(itemView.context)
                 .load(story.photoUrl)
                 .fitCenter()
@@ -73,7 +79,7 @@ class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCal
 
             val parsedDate = parseTime(story.createdAt)
 
-            parsedDate?.time?.let { binding.timeTv.text = formatTime(it, "dd-MMM-yyyy hh:mm:ss") }
+            parsedDate?.time?.let { binding.timeTv.text = formatTime(it, DATETIME_UI_FORMAT) }
 
             if (story.description.length > 50) {
 

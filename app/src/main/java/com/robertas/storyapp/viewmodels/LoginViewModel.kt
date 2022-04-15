@@ -30,7 +30,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             try {
 
-                val user = userAccountRepository.postLogin(email, password)
+                val user = userAccountRepository.login(email, password)
 
                 _loginState.value = NetworkResult.Success(user)
 

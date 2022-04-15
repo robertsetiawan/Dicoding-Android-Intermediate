@@ -1,5 +1,9 @@
 package com.robertas.storyapp.models.domain
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class Story(
     val id: String,
 
@@ -10,4 +14,4 @@ data class Story(
     val photoUrl: String,
 
     val createdAt: String,
-)
+): Parcelable
