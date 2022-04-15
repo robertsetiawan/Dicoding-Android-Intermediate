@@ -1,7 +1,6 @@
 package com.robertas.storyapp.views.components
 
 import android.content.Context
-import android.graphics.Canvas
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet

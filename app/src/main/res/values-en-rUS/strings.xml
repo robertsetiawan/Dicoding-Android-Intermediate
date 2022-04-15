@@ -36,4 +36,5 @@
     <string name="logout">logout</string>
     <string name="no_data">No data</string>
     <string name="restart_to_change_language">Restart application to change language</string>
+    <string name="appwidget_text">Story Banner</string>
 </resources>

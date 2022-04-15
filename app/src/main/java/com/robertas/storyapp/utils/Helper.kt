@@ -17,7 +17,7 @@ import java.util.*
 
 private const val FILENAME_FORMAT = "dd-MMM-yyyy"
 
-private const val DATE_TIME_FORMAT = "yyyy-MM-dd'T'hh:mm:ss.SSS"
+private const val DATETIME_FORMAT = "yyyy-MM-dd'T'hh:mm:ss.SSS"
 
 const val DATETIME_UI_FORMAT = "dd-MMM-yyyy hh:mm:ss"
 
@@ -26,7 +26,7 @@ val timeStamp: String = formatTime(System.currentTimeMillis(), FILENAME_FORMAT)
 fun parseTime(unformattedTime: String): Date?{
 
     val formatter = SimpleDateFormat(
-        DATE_TIME_FORMAT,
+        DATETIME_FORMAT,
         Locale.US)
 
     return formatter.parse(unformattedTime)

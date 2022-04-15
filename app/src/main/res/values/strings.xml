@@ -35,4 +35,5 @@
     <string name="logout">logout</string>
     <string name="no_data">Tidak ada data</string>
     <string name="restart_to_change_language">Mulai ulang aplikasi untuk mengganti bahasa</string>
+    <string name="appwidget_text">Banner Story</string>
 </resources>

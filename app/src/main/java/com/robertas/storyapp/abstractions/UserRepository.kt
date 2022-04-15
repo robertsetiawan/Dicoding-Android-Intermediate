@@ -1,8 +1,6 @@
 package com.robertas.storyapp.abstractions
 
 import com.robertas.storyapp.models.domain.User
-import com.robertas.storyapp.models.enums.CameraMode
-import com.robertas.storyapp.models.enums.LanguageMode
 import com.robertas.storyapp.models.network.UserNetwork
 
 abstract class UserRepository: BaseRepository<User, UserNetwork>() {
