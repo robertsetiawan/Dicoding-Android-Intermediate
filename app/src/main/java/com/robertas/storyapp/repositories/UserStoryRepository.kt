@@ -69,7 +69,7 @@ class UserStoryRepository @Inject constructor(
         }
     }
 
-    override suspend fun getAllStories(): List<Story>? {
+    override suspend fun getAllStories(withLocation: Boolean): List<Story>? {
         val token = pref.getString(UserAccountRepository.USER_TOKEN_KEY, "")
 
         val authToken = "Bearer $token"
@@ -80,7 +80,12 @@ class UserStoryRepository @Inject constructor(
             throw Exception(IN_SESSION_TIMEOUT)
         } else {
             withContext(Dispatchers.IO) {
-                response = apiService.getAllStories(authToken)
+
+                response = if (withLocation){
+                    apiService.getAllStories(authToken, 1)
+                } else {
+                    apiService.getAllStories(authToken, 0)
+                }
             }
 
             when (response.code()) {

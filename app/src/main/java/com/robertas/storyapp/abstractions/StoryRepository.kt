@@ -8,5 +8,5 @@ abstract class StoryRepository: BaseRepository<Story, StoryNetwork>() {
 
     abstract suspend fun postStory(file: File, description: String, rotation: Float): Boolean
 
-    abstract suspend fun getAllStories(): List<Story>?
+    abstract suspend fun getAllStories(withLocation: Boolean = false): List<Story>?
 }

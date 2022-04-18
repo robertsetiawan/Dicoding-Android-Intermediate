@@ -36,4 +36,9 @@
     <string name="no_data">Tidak ada data</string>
     <string name="restart_to_change_language">Mulai ulang aplikasi untuk mengganti bahasa</string>
     <string name="appwidget_text">Banner Story</string>
+    <string name="explore">Jelajahi</string>
+    <string name="normal_type">Normal</string>
+    <string name="hybrid_type">Hybrid</string>
+    <string name="satellite_type">Satellite</string>
+    <string name="terrain_type">Terrain</string>
 </resources>

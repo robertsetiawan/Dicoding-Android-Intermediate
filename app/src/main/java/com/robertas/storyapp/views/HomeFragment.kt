@@ -172,7 +172,7 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
             setNavigationOnClickListener { navController.navigateUp() }
         }
 
-        binding?.toolbarFragment?.inflateMenu(R.menu.settings_menu)
+        binding?.toolbarFragment?.inflateMenu(R.menu.home_menu)
 
         binding?.toolbarFragment?.setOnMenuItemClickListener(this)
     }
@@ -209,6 +209,14 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
                     HomeFragmentDirections.actionHomeFragmentToSettingFragment()
 
                 navController.navigate(actionToSettingsFragment)
+
+                true
+            }
+
+            R.id.explore -> {
+                val actionToMapsFragment = HomeFragmentDirections.actionHomeFragmentToMapsFragment()
+
+                navController.navigate(actionToMapsFragment)
 
                 true
             }

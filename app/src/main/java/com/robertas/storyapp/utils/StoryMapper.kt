@@ -12,7 +12,9 @@ class StoryMapper @Inject constructor(): IDomainMapper<StoryNetwork, Story> {
             name = source.name,
             description = source.description,
             photoUrl = source.photoUrl,
-            createdAt = source.createdAt
+            createdAt = source.createdAt,
+            lat = source.lat,
+            lon = source.lon
         )
     }
 }

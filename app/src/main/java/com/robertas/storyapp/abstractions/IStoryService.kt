@@ -35,6 +35,7 @@ interface IStoryService {
 
     @GET("stories")
     suspend fun getAllStories(
-        @Header("Authorization") token: String
+        @Header("Authorization") token: String,
+        @Query("location") withLocation: Int = 0,
     ): Response<StoryResponse>
 }

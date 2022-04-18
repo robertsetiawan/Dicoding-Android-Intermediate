@@ -37,4 +37,9 @@
     <string name="no_data">No data</string>
     <string name="restart_to_change_language">Restart application to change language</string>
     <string name="appwidget_text">Story Banner</string>
+    <string name="explore">Explore</string>
+    <string name="normal_type">Normal view</string>
+    <string name="hybrid_type">Hybrid view</string>
+    <string name="satellite_type">Satellite view</string>
+    <string name="terrain_type">Terrain view</string>
 </resources>

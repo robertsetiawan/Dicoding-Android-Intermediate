@@ -18,7 +18,7 @@ class StoryViewModel @Inject constructor(
     private val userStoryRepository: StoryRepository,
 
     private val userAccountRepository: UserRepository
-): ViewModel(), INavigation {
+) : ViewModel(), INavigation {
 
     private val _loadStoryState = MutableLiveData<NetworkResult<List<Story>?>>()
 
@@ -33,16 +33,16 @@ class StoryViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val storyList = userStoryRepository.getAllStories()
+                val storyList = userStoryRepository.getAllStories(false)
 
                 _loadStoryState.value = NetworkResult.Success(storyList)
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 _loadStoryState.value = NetworkResult.Error(e.message.toString())
             }
         }
     }
 
-    fun uploadImage(file: File, description: String, rotation: Float){
+    fun uploadImage(file: File, description: String, rotation: Float) {
 
         _uploadStoryState.value = NetworkResult.Loading
 
@@ -51,7 +51,7 @@ class StoryViewModel @Inject constructor(
                 val error = userStoryRepository.postStory(file, description, rotation)
 
                 _uploadStoryState.value = NetworkResult.Success(error)
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 _uploadStoryState.value = NetworkResult.Error(e.message.toString())
             }
         }
@@ -59,8 +59,9 @@ class StoryViewModel @Inject constructor(
 
     fun getCameraMode() = userAccountRepository.getCameraMode()
 
-    fun setCameraMode(mode: String){ userAccountRepository.setCameraMode(mode) }
-
+    fun setCameraMode(mode: String) {
+        userAccountRepository.setCameraMode(mode)
+    }
 
     override fun doneNavigating() {
         _uploadStoryState.value = NetworkResult.Loading

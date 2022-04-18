@@ -14,4 +14,8 @@ data class Story(
     val photoUrl: String,
 
     val createdAt: String,
+
+    val lat : Double?,
+
+    val lon: Double?
 ): Parcelable

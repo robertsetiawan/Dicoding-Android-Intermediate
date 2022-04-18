@@ -8,7 +8,6 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -32,7 +31,7 @@ class SettingFragment : Fragment(), View.OnClickListener {
 
     private lateinit var navController: NavController
 
-    private val storyViewModel by activityViewModels<StoryViewModel>()
+    private val storyViewModel by viewModels<StoryViewModel>()
 
     private val loginViewModel by viewModels<LoginViewModel>()
 
