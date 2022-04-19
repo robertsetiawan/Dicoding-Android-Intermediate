@@ -1,5 +1,7 @@
 package com.robertas.storyapp.views
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,10 +16,15 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
@@ -28,8 +35,6 @@ import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.viewmodels.MapsViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import java.lang.Exception
-
 
 @AndroidEntryPoint
 class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickListener {
@@ -120,23 +125,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
                 is NetworkResult.Loading -> {}
 
                 is NetworkResult.Success -> {
-                    result.data?.forEachIndexed { index, story ->
-
-                        if (story.lat != null && story.lon != null) {
-                            mMap.addMarker(
-                                MarkerOptions()
-                                    .position(LatLng(story.lat, story.lon))
-                                    .title(story.name)
-                            )
-
-                            if (index == 0) mMap.animateCamera(
-                                CameraUpdateFactory.newLatLngZoom(
-                                    LatLng(story.lat, story.lon),
-                                    0f
-                                )
-                            )
-                        }
-                    }
+                    result.data?.forEachIndexed { index, story -> loadMarker(index, story) }
                 }
                 is NetworkResult.Error -> {
                     binding?.root?.let {
@@ -148,6 +137,39 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
         }
 
         mapsViewModel.loadStoryState.observe(viewLifecycleOwner, storyListObserver)
+    }
+
+    private fun loadMarker(index: Int, story: Story) {
+        if (story.lat != null && story.lon != null) {
+            Glide.with(requireContext())
+                .asBitmap()
+                .load(story.photoUrl)
+                .apply(RequestOptions().centerCrop())
+                .into(object : CustomTarget<Bitmap>() {
+                    override fun onResourceReady(
+                        resource: Bitmap,
+                        transition: Transition<in Bitmap>?
+                    ) {
+                        val resizedBitmap = resizeBitmap(resource, 100, 100)
+
+                        mMap.addMarker(
+                            MarkerOptions()
+                                .position(LatLng(story.lat, story.lon))
+                                .title(story.name)
+                                .icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap))
+                        )
+
+                        if (index == 0) mMap.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(story.lat, story.lon),
+                                0f
+                            )
+                        )
+                    }
+
+                    override fun onLoadCleared(placeholder: Drawable?) {}
+                })
+        }
     }
 
     override fun onDestroyView() {
@@ -179,6 +201,11 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
+
+        return Bitmap.createScaledBitmap(bitmap, width, height, false)
     }
 
     companion object {

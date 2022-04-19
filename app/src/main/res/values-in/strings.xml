@@ -41,4 +41,5 @@
     <string name="hybrid_type">Tampilan Hibrid</string>
     <string name="satellite_type">Tampilan satelit</string>
     <string name="terrain_type">Tampilan medan</string>
+    <string name="retry">Retry</string>
 </resources>

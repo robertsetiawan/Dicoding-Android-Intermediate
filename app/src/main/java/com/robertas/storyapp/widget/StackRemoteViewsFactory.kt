@@ -1,4 +1,4 @@
-package com.robertas.storyapp
+package com.robertas.storyapp.widget
 
 import android.content.Context
 import android.content.Intent
@@ -7,6 +7,7 @@ import android.widget.RemoteViewsService
 import androidx.core.os.bundleOf
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.models.domain.Story
 import kotlinx.coroutines.runBlocking
@@ -21,7 +22,7 @@ class StackRemoteViewsFactory(private val context: Context, private val storyRep
     override fun onDataSetChanged() {
         runBlocking {
             try {
-                val storyList = storyRepository.getAllStories()
+                val storyList = storyRepository.getAllStories(false)
 
                 storyList?.let {
                     listStory.clear()

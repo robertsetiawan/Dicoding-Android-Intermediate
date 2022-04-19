@@ -9,26 +9,29 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import androidx.paging.LoadState
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.IOnItemClickListener
+import com.robertas.storyapp.adapters.LoadingStateAdapter
 import com.robertas.storyapp.adapters.StoryListAdapter
 import com.robertas.storyapp.databinding.FragmentHomeBinding
 import com.robertas.storyapp.databinding.StoryCardBinding
 import com.robertas.storyapp.models.domain.Story
-import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnClickListener,
+class HomeFragment : Fragment(), View.OnClickListener,
     Toolbar.OnMenuItemClickListener {
 
     private var _binding: FragmentHomeBinding? = null
@@ -87,42 +90,23 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
                 }
             }
 
-        val storyListObserver = Observer<NetworkResult<List<Story>?>> { result ->
-            when (result) {
-                is NetworkResult.Loading -> binding?.swipeRefresh?.isRefreshing = true
 
-                is NetworkResult.Success -> {
+        val storyStatusObserver = Observer<Boolean> { invalid ->
+            if (invalid) {
+                storyListAdapter.refresh()
 
-                    result.data?.let {
-                        if (it.isNotEmpty()) {
-                            switchRefreshAndList(false)
-
-                            storyListAdapter.submitList(it)
-                        } else {
-                            switchRefreshAndList(true)
-                        }
-                    }
-                }
-                is NetworkResult.Error -> {
-                    binding?.root?.let {
-                        Snackbar.make(it, result.message, Snackbar.LENGTH_SHORT).show()
-                    }
-
-                    binding?.storyList?.adapter?.itemCount?.let {
-                        if (it == 0) {
-                            switchRefreshAndList(true)
-                        } else {
-                            switchRefreshAndList(false)
-                        }
-                    }
-                }
+                storyViewModel.validateStories()
             }
         }
 
-        storyViewModel.loadStoryState.observe(viewLifecycleOwner, storyListObserver)
+        storyViewModel.isStoriesInvalid.observe(viewLifecycleOwner, storyStatusObserver)
 
         binding?.storyList?.apply {
-            adapter = storyListAdapter
+            adapter = storyListAdapter.withLoadStateFooter(
+                footer = LoadingStateAdapter {
+                    storyListAdapter.retry()
+                }
+            )
 
             postponeEnterTransition()
 
@@ -133,7 +117,21 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
                 }
         }
 
-        swipeRefreshLayout?.setOnRefreshListener(this)
+        lifecycleScope.launch {
+            storyListAdapter.loadStateFlow.collectLatest { loadStates ->
+                swipeRefreshLayout?.isRefreshing = loadStates.refresh is LoadState.Loading
+            }
+        }
+
+        lifecycleScope.launch {
+            storyViewModel.getPaginatedStories().collectLatest {
+                storyListAdapter.submitData(lifecycle, it)
+            }
+        }
+
+        swipeRefreshLayout?.setOnRefreshListener {
+            storyListAdapter.refresh()
+        }
     }
 
     private fun switchRefreshAndList(isEmptyList: Boolean) {
@@ -183,10 +181,6 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
         _binding = null
 
         swipeRefreshLayout = null
-    }
-
-    override fun onRefresh() {
-        storyViewModel.getAllStories()
     }
 
     override fun onClick(view: View) {

@@ -3,13 +3,18 @@ package com.robertas.storyapp.viewmodels
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.robertas.storyapp.abstractions.INavigation
 import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import java.io.File
 import javax.inject.Inject
 
@@ -20,6 +25,10 @@ class StoryViewModel @Inject constructor(
     private val userAccountRepository: UserRepository
 ) : ViewModel(), INavigation {
 
+    private val _isStoriesInvalid = MutableLiveData(false)
+
+    val isStoriesInvalid get() = _isStoriesInvalid
+
     private val _loadStoryState = MutableLiveData<NetworkResult<List<Story>?>>()
 
     val loadStoryState get() = _loadStoryState
@@ -27,6 +36,26 @@ class StoryViewModel @Inject constructor(
     private val _uploadStoryState = MutableLiveData<NetworkResult<Boolean>>()
 
     val uploadStoryState get() = _uploadStoryState
+
+    fun invalidateStories() {
+        _isStoriesInvalid.value = true
+    }
+
+    fun validateStories() {
+        _isStoriesInvalid.value = false
+    }
+
+    private var _paginatedStories: Flow<PagingData<Story>>? = null
+
+    fun getPaginatedStories(): Flow<PagingData<Story>> {
+
+        if (_paginatedStories == null) {
+            _paginatedStories =
+                userStoryRepository.getAllStories().cachedIn(viewModelScope + Dispatchers.IO)
+        }
+
+        return _paginatedStories as Flow<PagingData<Story>>
+    }
 
     fun getAllStories() {
         _loadStoryState.value = NetworkResult.Loading
@@ -65,9 +94,5 @@ class StoryViewModel @Inject constructor(
 
     override fun doneNavigating() {
         _uploadStoryState.value = NetworkResult.Loading
-    }
-
-    init {
-        getAllStories()
     }
 }

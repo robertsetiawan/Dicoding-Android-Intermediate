@@ -42,4 +42,5 @@
     <string name="hybrid_type">Hybrid view</string>
     <string name="satellite_type">Satellite view</string>
     <string name="terrain_type">Terrain view</string>
+    <string name="retry">Retry</string>
 </resources>

@@ -7,5 +7,5 @@ abstract class BaseRepository <T, V> {
 
     abstract val pref: SharedPreferences
 
-    abstract val domainMapper: IDomainMapper<V, T>
+    abstract val networkMapper: IDomainMapper<V, T>
 }

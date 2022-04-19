@@ -5,14 +5,15 @@ import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.network.StoryNetwork
 import javax.inject.Inject
 
-class StoryMapper @Inject constructor(): IDomainMapper<StoryNetwork, Story> {
+class StoryNetworkMapper @Inject constructor(): IDomainMapper<StoryNetwork, Story> {
     override fun mapToEntity(source: StoryNetwork): Story {
         return Story(
             id = source.id,
             name = source.name,
             description = source.description,
             photoUrl = source.photoUrl,
-            createdAt = source.createdAt,
+            createdAt = parseTime(source.createdAt)?.let { formatTime(it.time, DATETIME_UI_FORMAT) }
+                ?: "",
             lat = source.lat,
             lon = source.lon
         )

@@ -57,14 +57,21 @@ class LoginViewModelTest {
 
         assertEquals(actualLoginState.value, NetworkResult.Success(dummyUser))
 
+        assertNotEquals(actualLoginState.value, NetworkResult.Success(null))
+
         assertTrue(actualIsLogin)
     }
 
     @Test
     fun `when user logout then return false`() {
-        `when`(userAccountRepository.isUserLoggedIn()).thenReturn(false)
 
-        userAccountRepository.logOut()
+        `when`(userAccountRepository.logOut()).then {
+
+            `when`(userAccountRepository.isUserLoggedIn()).thenReturn(false)
+
+        }
+
+        loginViewModel.logOut()
 
         val actualIsLogin = loginViewModel.isUserLoggedIn()
 
@@ -83,7 +90,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `get language will result settled language`(){
+    fun `get language mode will result saved language mode`(){
 
         val expectedLanguage = "id"
 

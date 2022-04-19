@@ -18,7 +18,7 @@ import javax.inject.Inject
 class UserAccountRepository @Inject constructor(
     override val apiService: IStoryService,
     override val pref: SharedPreferences,
-    override val domainMapper: IDomainMapper<UserNetwork, User>
+    override val networkMapper: IDomainMapper<UserNetwork, User>
 ) : UserRepository() {
     override suspend fun login(email: String, password: String): User? {
         val response: Response<UserResponse>
@@ -37,7 +37,7 @@ class UserAccountRepository @Inject constructor(
 
                 } else {
 
-                    return apiResponse?.data?.let { domainMapper.mapToEntity(it) }
+                    return apiResponse?.data?.let { networkMapper.mapToEntity(it) }
                 }
             }
 

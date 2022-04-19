@@ -63,6 +63,8 @@ class StoryDetailFragment : Fragment() {
 
             storyImg.transitionName = "picture_${story.id}"
 
+            storyImg.contentDescription = story.description
+
             nameTv.transitionName = "name_${story.id}"
 
             fullDescTv.transitionName = "desc_${story.id}"
@@ -75,9 +77,7 @@ class StoryDetailFragment : Fragment() {
 
             fullDescTv.text = story.description
 
-            val parsedDate = parseTime(story.createdAt)
-
-            parsedDate?.time?.let { timeTv.text = formatTime(it, DATETIME_UI_FORMAT) }
+            timeTv.text = story.createdAt
         }
     }
 

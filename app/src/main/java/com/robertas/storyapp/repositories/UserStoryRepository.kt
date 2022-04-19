@@ -1,14 +1,21 @@
 package com.robertas.storyapp.repositories
 
 import android.content.SharedPreferences
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.robertas.storyapp.abstractions.IDomainMapper
 import com.robertas.storyapp.abstractions.IStoryService
+import com.robertas.storyapp.abstractions.StoryDatabase
 import com.robertas.storyapp.abstractions.StoryRepository
+import com.robertas.storyapp.data.StoryRemoteMediator
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.network.StoryNetwork
 import com.robertas.storyapp.models.network.StoryResponse
 import com.robertas.storyapp.utils.reduceThenRotateFileImage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -22,8 +29,9 @@ import javax.inject.Inject
 
 class UserStoryRepository @Inject constructor(
     override val apiService: IStoryService,
-    override val domainMapper: IDomainMapper<StoryNetwork, Story>,
-    override val pref: SharedPreferences
+    override val networkMapper: IDomainMapper<StoryNetwork, Story>,
+    override val pref: SharedPreferences,
+    override val storyDatabase: StoryDatabase,
 ) : StoryRepository() {
     override suspend fun postStory(file: File, description: String, rotation: Float): Boolean {
 
@@ -69,6 +77,19 @@ class UserStoryRepository @Inject constructor(
         }
     }
 
+    override fun getAllStories(): Flow<PagingData<Story>> {
+        @OptIn(ExperimentalPagingApi::class)
+        return Pager(
+            config = PagingConfig(
+                pageSize = 5
+            ),
+            remoteMediator = StoryRemoteMediator(storyDatabase, apiService, pref, networkMapper),
+            pagingSourceFactory = {
+                storyDatabase.storyDao.getAllStories()
+            }
+        ).flow
+    }
+
     override suspend fun getAllStories(withLocation: Boolean): List<Story>? {
         val token = pref.getString(UserAccountRepository.USER_TOKEN_KEY, "")
 
@@ -91,7 +112,7 @@ class UserStoryRepository @Inject constructor(
             when (response.code()) {
                 200 -> {
                     return if (response.body()?.error == false) {
-                        response.body()?.data?.map { it -> domainMapper.mapToEntity(it) }.orEmpty()
+                        response.body()?.data?.map { it -> networkMapper.mapToEntity(it) }.orEmpty()
                     } else {
                         null
                     }

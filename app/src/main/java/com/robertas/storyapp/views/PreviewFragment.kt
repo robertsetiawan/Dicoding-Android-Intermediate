@@ -180,7 +180,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                         ).show()
                     }
 
-                    storyViewModel.getAllStories()
+//                    storyViewModel.getAllStories()
 
                     navController.navigateUp()
 

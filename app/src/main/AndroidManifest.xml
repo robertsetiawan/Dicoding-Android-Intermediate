@@ -38,7 +38,7 @@
             android:value="AIzaSyDXj8obVWWd7swrMe6TWh3irXNyMo5SnsA" />
 
         <receiver
-            android:name=".StackStoryWidget"
+            android:name=".widget.StackStoryWidget"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -50,7 +50,7 @@
         </receiver>
 
         <service
-            android:name=".StackStoryService"
+            android:name=".widget.StackStoryService"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <activity

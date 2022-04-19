@@ -38,4 +38,12 @@ interface IStoryService {
         @Header("Authorization") token: String,
         @Query("location") withLocation: Int = 0,
     ): Response<StoryResponse>
+
+    @GET("stories")
+    suspend fun getAllStories(
+        @Header("Authorization") token: String,
+        @Query("location") withLocation: Int = 0,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<StoryResponse>
 }

@@ -5,19 +5,16 @@ import android.transition.TransitionManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.IOnItemClickListener
 import com.robertas.storyapp.databinding.StoryCardBinding
 import com.robertas.storyapp.models.domain.Story
-import com.robertas.storyapp.utils.DATETIME_UI_FORMAT
-import com.robertas.storyapp.utils.formatTime
-import com.robertas.storyapp.utils.parseTime
 
-class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCallBack) {
+class StoryListAdapter : PagingDataAdapter<Story, StoryListAdapter.ViewHolder>(DiffCallBack) {
 
     lateinit var onItemClickListener: IOnItemClickListener<Story, StoryCardBinding>
 
@@ -31,7 +28,7 @@ class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCal
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val story = getItem(position)
 
-        holder.bind(story)
+        story?.let { holder.bind(it) }
     }
 
 
@@ -62,15 +59,21 @@ class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCal
             binding.smallDescTv.visibility = View.VISIBLE
         }
 
+        private fun setTransitionName(story: Story){
+            binding.apply {
+                storyImg.transitionName = "picture_${story.id}"
+
+                nameTv.transitionName = "name_${story.id}"
+
+                smallDescTv.transitionName = "desc_${story.id}"
+
+                timeTv.transitionName = "time_${story.id}"
+            }
+        }
+
         fun bind(story: Story) {
 
-            binding.storyImg.transitionName = "picture_${story.id}"
-
-            binding.nameTv.transitionName = "name_${story.id}"
-
-            binding.smallDescTv.transitionName = "desc_${story.id}"
-
-            binding.timeTv.transitionName = "time_${story.id}"
+            setTransitionName(story)
 
             binding.storyImg.contentDescription = story.description
 
@@ -86,9 +89,7 @@ class StoryListAdapter : ListAdapter<Story, StoryListAdapter.ViewHolder>(DiffCal
 
             binding.expandedLayout.visibility = View.GONE
 
-            val parsedDate = parseTime(story.createdAt)
-
-            parsedDate?.time?.let { binding.timeTv.text = formatTime(it, DATETIME_UI_FORMAT) }
+            binding.timeTv.text = story.createdAt
 
             if (story.description.length > 50) {
 

@@ -9,8 +9,8 @@ import com.robertas.storyapp.models.network.StoryNetwork
 import com.robertas.storyapp.models.network.UserNetwork
 import com.robertas.storyapp.repositories.UserAccountRepository
 import com.robertas.storyapp.repositories.UserStoryRepository
-import com.robertas.storyapp.utils.StoryMapper
-import com.robertas.storyapp.utils.UserMapper
+import com.robertas.storyapp.utils.StoryNetworkMapper
+import com.robertas.storyapp.utils.UserNetworkMapper
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -21,10 +21,10 @@ import dagger.hilt.components.SingletonComponent
 abstract class RepositoryModule {
 
     @Binds
-    abstract fun bindStoryMapper(storyMapper: StoryMapper): IDomainMapper<StoryNetwork, Story>
+    abstract fun bindStoryMapper(storyMapper: StoryNetworkMapper): IDomainMapper<StoryNetwork, Story>
 
     @Binds
-    abstract fun bindUserMapper(userMapper: UserMapper): IDomainMapper<UserNetwork, User>
+    abstract fun bindUserMapper(userMapper: UserNetworkMapper): IDomainMapper<UserNetwork, User>
 
     @Binds
     abstract fun bindUserAccountRepository(userAccountRepository: UserAccountRepository):
