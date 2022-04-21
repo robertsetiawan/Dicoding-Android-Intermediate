@@ -36,10 +36,9 @@ class StoryPagingSource @Inject constructor(
                 val response = apiService.getAllStories(authToken, 0, page, params.loadSize)
 
                 LoadResult.Page(
-                    data = response.body()?.data?.map { it -> networkMapper.mapToEntity(it) }
-                        .orEmpty(),
+                    data = response.data?.map { networkMapper.mapToEntity(it) }.orEmpty(),
                     prevKey = if (page == 1) null else page - 1,
-                    nextKey = if (response.body()?.data.isNullOrEmpty()) null else page + 1
+                    nextKey = if (response.data.isNullOrEmpty()) null else page + 1
                 )
             }
         } catch (exception: Exception) {

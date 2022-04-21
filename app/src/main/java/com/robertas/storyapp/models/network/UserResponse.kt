@@ -1,5 +1,6 @@
 package com.robertas.storyapp.models.network
 
+import com.robertas.storyapp.abstractions.ApiResponse
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 

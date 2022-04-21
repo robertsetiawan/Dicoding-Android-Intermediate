@@ -6,6 +6,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -17,6 +18,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import androidx.paging.LoadState
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.IOnItemClickListener
 import com.robertas.storyapp.adapters.LoadingStateAdapter
@@ -120,6 +122,28 @@ class HomeFragment : Fragment(), View.OnClickListener,
         lifecycleScope.launch {
             storyListAdapter.loadStateFlow.collectLatest { loadStates ->
                 swipeRefreshLayout?.isRefreshing = loadStates.refresh is LoadState.Loading
+
+                if (loadStates.refresh is LoadState.NotLoading && loadStates.prepend is LoadState.Loading) {
+                    binding?.storyList?.scrollToPosition(0)
+                }
+
+                binding?.storyList?.isVisible =
+                    loadStates.source.refresh is LoadState.NotLoading || loadStates.mediator?.refresh is LoadState.NotLoading
+
+                binding?.emptyLayout?.isVisible =
+                    loadStates.mediator?.refresh is LoadState.Error && storyListAdapter.itemCount == 0
+
+                val errorState = loadStates.source.append as? LoadState.Error
+                    ?: loadStates.source.prepend as? LoadState.Error
+                    ?: loadStates.append as? LoadState.Error
+                    ?: loadStates.prepend as? LoadState.Error
+
+                errorState?.let { state ->
+
+                    binding?.root?.let {
+                        Snackbar.make(it, state.error.toString(), Snackbar.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
 
@@ -131,30 +155,6 @@ class HomeFragment : Fragment(), View.OnClickListener,
 
         swipeRefreshLayout?.setOnRefreshListener {
             storyListAdapter.refresh()
-        }
-    }
-
-    private fun switchRefreshAndList(isEmptyList: Boolean) {
-
-        if (isEmptyList) {
-
-            binding?.apply {
-                swipeRefreshLayout?.isRefreshing = false
-
-                storyList.visibility = View.GONE
-
-                emptyLayout.visibility = View.VISIBLE
-            }
-
-        } else {
-
-            binding?.apply {
-                swipeRefresh.isRefreshing = false
-
-                storyList.visibility = View.VISIBLE
-
-                emptyLayout.visibility = View.GONE
-            }
         }
     }
 

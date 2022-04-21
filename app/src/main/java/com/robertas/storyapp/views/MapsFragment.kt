@@ -9,6 +9,8 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -17,7 +19,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -144,13 +145,12 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
             Glide.with(requireContext())
                 .asBitmap()
                 .load(story.photoUrl)
-                .apply(RequestOptions().centerCrop())
                 .into(object : CustomTarget<Bitmap>() {
                     override fun onResourceReady(
                         resource: Bitmap,
                         transition: Transition<in Bitmap>?
                     ) {
-                        val resizedBitmap = resizeBitmap(resource, 100, 100)
+                        val resizedBitmap = resizeBitmap(resource, 75, 75)
 
                         mMap.addMarker(
                             MarkerOptions()
@@ -205,7 +205,17 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
 
     private fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
 
-        return Bitmap.createScaledBitmap(bitmap, width, height, false)
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false)
+
+        val roundedBitmapDrawable = RoundedBitmapDrawableFactory.create(resources, scaledBitmap)
+
+        roundedBitmapDrawable.apply {
+            cornerRadius = 50.0f
+
+            setAntiAlias(true)
+        }
+
+        return roundedBitmapDrawable.toBitmap()
     }
 
     companion object {

@@ -5,6 +5,7 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import com.google.android.gms.maps.model.LatLng
 import com.robertas.storyapp.abstractions.IDomainMapper
 import com.robertas.storyapp.abstractions.IStoryService
 import com.robertas.storyapp.abstractions.StoryDatabase
@@ -22,8 +23,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import retrofit2.Response
 import java.io.File
 import javax.inject.Inject
 
@@ -39,7 +38,7 @@ class UserStoryRepository @Inject constructor(
 
         val authToken = "Bearer $token"
 
-        val response: Response<StoryResponse>
+        val response: StoryResponse
 
         if (token.isNullOrBlank()) {
 
@@ -61,19 +60,59 @@ class UserStoryRepository @Inject constructor(
                     img)
 
                 response = apiService.postStory(authToken, multiPart, desc)
-            }
 
-            when (response.code()) {
-                201 -> {
-                    return if (response.body()?.error == false) {
-                        true
-                    } else {
-                        throw Exception(response.body()?.message)
-                    }
+                if (response.error) {
+                    throw Exception(response.message)
                 }
-
-                else -> throw Exception(getMessageFromApi(response))
             }
+
+            return !response.error
+        }
+    }
+
+    override suspend fun postStory(
+        file: File,
+        description: String,
+        rotation: Float,
+        latLng: LatLng
+    ): Boolean {
+        val token = pref.getString(UserAccountRepository.USER_TOKEN_KEY, "")
+
+        val authToken = "Bearer $token"
+
+        val response: StoryResponse
+
+        if (token.isNullOrBlank()) {
+
+            throw Exception(IN_SESSION_TIMEOUT)
+
+        } else {
+
+            withContext(Dispatchers.IO){
+
+                val reducedFile = reduceThenRotateFileImage(file, rotation)
+
+                val desc = description.toRequestBody("text/plain".toMediaType())
+
+                val lat = latLng.latitude.toString().toRequestBody("text/plain".toMediaType())
+
+                val lon = latLng.longitude.toString().toRequestBody("text/plain".toMediaType())
+
+                val img = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+
+                val multiPart = MultipartBody.Part.createFormData(
+                    "photo",
+                    reducedFile.name,
+                    img)
+
+                response = apiService.postStory(authToken, multiPart, desc, lat, lon)
+
+                if (response.error) {
+                    throw Exception(response.message)
+                }
+            }
+
+            return !response.error
         }
     }
 
@@ -90,12 +129,12 @@ class UserStoryRepository @Inject constructor(
         ).flow
     }
 
-    override suspend fun getAllStories(withLocation: Boolean): List<Story>? {
+    override suspend fun getAllStories(withLocation: Boolean): List<Story> {
         val token = pref.getString(UserAccountRepository.USER_TOKEN_KEY, "")
 
         val authToken = "Bearer $token"
 
-        val response: Response<StoryResponse>
+        val response: StoryResponse
 
         if (token.isNullOrBlank()) {
             throw Exception(IN_SESSION_TIMEOUT)
@@ -109,24 +148,12 @@ class UserStoryRepository @Inject constructor(
                 }
             }
 
-            when (response.code()) {
-                200 -> {
-                    return if (response.body()?.error == false) {
-                        response.body()?.data?.map { it -> networkMapper.mapToEntity(it) }.orEmpty()
-                    } else {
-                        null
-                    }
-                }
-
-                else -> throw Exception(getMessageFromApi(response))
+            if (response.error) {
+                throw Exception(response.message)
+            } else {
+                return response.data?.map { networkMapper.mapToEntity(it) }.orEmpty()
             }
         }
-    }
-
-    private fun getMessageFromApi(response: Response<*>): String {
-        val jsonObj = JSONObject(response.errorBody()?.charStream()?.readText().orEmpty())
-
-        return jsonObj.getString("message").orEmpty()
     }
 
     companion object {

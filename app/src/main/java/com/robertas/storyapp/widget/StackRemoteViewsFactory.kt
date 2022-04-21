@@ -24,7 +24,7 @@ class StackRemoteViewsFactory(private val context: Context, private val storyRep
             try {
                 val storyList = storyRepository.getAllStories(false)
 
-                storyList?.let {
+                storyList.let {
                     listStory.clear()
 
                     listStory.addAll(it)

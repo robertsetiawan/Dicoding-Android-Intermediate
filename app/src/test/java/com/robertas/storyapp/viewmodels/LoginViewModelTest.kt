@@ -4,8 +4,10 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.robertas.storyapp.DataDummy
 import com.robertas.storyapp.MainCoroutineRule
 import com.robertas.storyapp.abstractions.UserRepository
+import com.robertas.storyapp.getOrAwaitValue
 import com.robertas.storyapp.models.enums.NetworkResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -16,6 +18,8 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.junit.MockitoJUnitRunner
+import java.lang.Exception
+import java.lang.RuntimeException
 
 
 @ExperimentalCoroutinesApi
@@ -51,16 +55,17 @@ class LoginViewModelTest {
 
         val actualIsLogin = loginViewModel.isUserLoggedIn()
 
-        val actualLoginState = loginViewModel.loginState
+        val actualLoginState = loginViewModel.loginState.getOrAwaitValue()
 
         Mockito.verify(userAccountRepository).login(dummyUser.name, "123456")
 
-        assertEquals(actualLoginState.value, NetworkResult.Success(dummyUser))
+        assertEquals(NetworkResult.Success(dummyUser), actualLoginState)
 
-        assertNotEquals(actualLoginState.value, NetworkResult.Success(null))
+        assertNotEquals(NetworkResult.Success(null), actualLoginState)
 
         assertTrue(actualIsLogin)
     }
+
 
     @Test
     fun `when user logout then return false`() {
@@ -70,7 +75,6 @@ class LoginViewModelTest {
             `when`(userAccountRepository.isUserLoggedIn()).thenReturn(false)
 
         }
-
         loginViewModel.logOut()
 
         val actualIsLogin = loginViewModel.isUserLoggedIn()
@@ -80,13 +84,28 @@ class LoginViewModelTest {
         assertFalse(actualIsLogin)
     }
 
+
+    @Test
+    fun `when login error then result is error`() = mainCoroutineRule.runBlockingTest {
+
+        `when`(userAccountRepository.login(dummyUser.name, "123456")).thenThrow(RuntimeException("password harus lebih dari 6"))
+
+        loginViewModel.login(dummyUser.name, "123456")
+
+        val actualLoginState = loginViewModel.loginState.getOrAwaitValue()
+
+        assertEquals(NetworkResult.Error("password harus lebih dari 6"), actualLoginState)
+
+        Mockito.verify(userAccountRepository).login(dummyUser.name, "123456")
+    }
+
     @Test
     fun `when finish navigating then LoginState is loading`() {
         loginViewModel.doneNavigating()
 
-        val loginState = loginViewModel.loginState
+        val loginState = loginViewModel.loginState.getOrAwaitValue()
 
-        assertEquals(loginState.value, NetworkResult.Loading)
+        assertEquals(NetworkResult.Loading, loginState)
     }
 
     @Test
@@ -100,7 +119,7 @@ class LoginViewModelTest {
 
         val actualLanguage = userAccountRepository.getLanguageMode()
 
-        assertEquals(actualLanguage, expectedLanguage)
+        assertEquals(expectedLanguage, actualLanguage)
 
         Mockito.verify(userAccountRepository).setLanguageMode(expectedLanguage)
 

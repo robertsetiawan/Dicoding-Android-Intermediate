@@ -5,16 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.google.android.gms.maps.model.LatLng
 import com.robertas.storyapp.abstractions.INavigation
 import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import java.io.File
 import javax.inject.Inject
 
@@ -28,10 +27,6 @@ class StoryViewModel @Inject constructor(
     private val _isStoriesInvalid = MutableLiveData(false)
 
     val isStoriesInvalid get() = _isStoriesInvalid
-
-    private val _loadStoryState = MutableLiveData<NetworkResult<List<Story>?>>()
-
-    val loadStoryState get() = _loadStoryState
 
     private val _uploadStoryState = MutableLiveData<NetworkResult<Boolean>>()
 
@@ -51,24 +46,10 @@ class StoryViewModel @Inject constructor(
 
         if (_paginatedStories == null) {
             _paginatedStories =
-                userStoryRepository.getAllStories().cachedIn(viewModelScope + Dispatchers.IO)
+                userStoryRepository.getAllStories().cachedIn(viewModelScope)
         }
 
         return _paginatedStories as Flow<PagingData<Story>>
-    }
-
-    fun getAllStories() {
-        _loadStoryState.value = NetworkResult.Loading
-
-        viewModelScope.launch {
-            try {
-                val storyList = userStoryRepository.getAllStories(false)
-
-                _loadStoryState.value = NetworkResult.Success(storyList)
-            } catch (e: Exception) {
-                _loadStoryState.value = NetworkResult.Error(e.message.toString())
-            }
-        }
     }
 
     fun uploadImage(file: File, description: String, rotation: Float) {
@@ -78,6 +59,21 @@ class StoryViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val error = userStoryRepository.postStory(file, description, rotation)
+
+                _uploadStoryState.value = NetworkResult.Success(error)
+            } catch (e: Exception) {
+                _uploadStoryState.value = NetworkResult.Error(e.message.toString())
+            }
+        }
+    }
+
+    fun uploadImage(file: File, description: String, rotation: Float, latLng: LatLng) {
+
+        _uploadStoryState.value = NetworkResult.Loading
+
+        viewModelScope.launch {
+            try {
+                val error = userStoryRepository.postStory(file, description, rotation, latLng)
 
                 _uploadStoryState.value = NetworkResult.Success(error)
             } catch (e: Exception) {

@@ -11,8 +11,6 @@ import com.robertas.storyapp.models.network.UserNetwork
 import com.robertas.storyapp.models.network.UserResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import retrofit2.Response
 import javax.inject.Inject
 
 class UserAccountRepository @Inject constructor(
@@ -21,48 +19,36 @@ class UserAccountRepository @Inject constructor(
     override val networkMapper: IDomainMapper<UserNetwork, User>
 ) : UserRepository() {
     override suspend fun login(email: String, password: String): User? {
-        val response: Response<UserResponse>
+        val response: UserResponse
 
         withContext(Dispatchers.IO) {
             response = apiService.postLogin(email = email, password = password)
         }
 
-        when (response.code()) {
-            200 -> {
-                val apiResponse = response.body()
+        if (response.error) {
 
-                if (apiResponse?.error == true) {
+            throw Exception(response.message)
 
-                    throw Exception(apiResponse.message)
+        } else {
 
-                } else {
-
-                    return apiResponse?.data?.let { networkMapper.mapToEntity(it) }
-                }
-            }
-
-            else -> throw Exception(getMessageFromApi(response))
+            return response.data?.let { networkMapper.mapToEntity(it) }
         }
     }
 
     override suspend fun register(name: String, email: String, password: String): Boolean {
-        val response: Response<UserResponse>
+        val response: UserResponse
 
         withContext(Dispatchers.IO) {
             response = apiService.register(email = email, password = password, name = name)
         }
 
-        when (response.code()) {
-            201 -> {
-                return if (response.body()?.error == false) {
-                    true
-                } else {
-                    throw Exception(response.body()?.message)
-                }
-            }
-
-            else -> throw Exception(getMessageFromApi(response))
+        if (response.error){
+            throw Exception(response.message)
+        } else {
+            return response.error
         }
+
+
     }
 
     override fun isUserLoggedIn(): Boolean {
@@ -88,12 +74,6 @@ class UserAccountRepository @Inject constructor(
 
     override fun logOut() {
         pref.edit().clear().apply()
-    }
-
-    private fun getMessageFromApi(response: Response<*>): String {
-        val jsonObj = JSONObject(response.errorBody()?.charStream()?.readText().orEmpty())
-
-        return jsonObj.getString("message").orEmpty()
     }
 
     override fun getCameraMode(): String {

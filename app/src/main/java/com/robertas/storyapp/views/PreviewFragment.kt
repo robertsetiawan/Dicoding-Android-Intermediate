@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.Intent.ACTION_GET_CONTENT
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -27,6 +28,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.robertas.storyapp.R
@@ -63,6 +67,10 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
     private var rotationDegree = 0f
 
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    private var lastLocation: LatLng? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -75,6 +83,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
         setupNavigation()
 
@@ -89,22 +99,25 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         binding?.galleryBtn?.setOnClickListener(this)
 
         binding?.rotateBtn?.setOnClickListener(this)
+
+        getLastLocation()
     }
 
     private fun requestCameraPermission() {
-        if (allPermissionsGranted()) {
+        if (isCameraPermissionGranted()) {
 
             startCamera()
         } else {
 
-            requestPermission.launch(REQUIRED_PERMISSIONS)
+            requestPermission.launch(REQUIRED_CAMERA_PERMISSION)
         }
     }
 
-    private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
+    private fun isCameraPermissionGranted() = ContextCompat.checkSelfPermission(
         requireContext(),
-        REQUIRED_PERMISSIONS
+        REQUIRED_CAMERA_PERMISSION
     ) == PackageManager.PERMISSION_GRANTED
+
 
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { permission ->
@@ -120,6 +133,57 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                 }
             }
         }
+
+    private val requestMultiplePermission =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
+        { permissions ->
+            when {
+                permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false -> {
+                    getLastLocation()
+                }
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false -> {
+                    getLastLocation()
+                }
+                else -> {}
+            }
+
+        }
+
+    private fun getLastLocation() {
+
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+
+            requestMultiplePermission.launch(REQUIRED_LOCATION_PERMISSONS)
+
+        } else {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+
+                location?.apply {
+                    lastLocation = LatLng(this.latitude, this.longitude)
+                }
+
+                if (location == null) {
+                    lastLocation = null
+
+                    binding?.root?.let {
+                        Snackbar.make(
+                            it,
+                            "Last location is null",
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+            }
+        }
+    }
 
     private fun startCamera() {
         when (storyViewModel.getCameraMode()) {
@@ -180,7 +244,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                         ).show()
                     }
 
-//                    storyViewModel.getAllStories()
+                    storyViewModel.invalidateStories()
 
                     navController.navigateUp()
 
@@ -203,11 +267,10 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                     binding?.root?.let {
                         Snackbar.make(
                             it,
-                            getString(R.string.failed_to_create_story),
+                            result.message,
                             Snackbar.LENGTH_SHORT
                         ).show()
                     }
-
 
                     storyViewModel.doneNavigating()
                 }
@@ -227,6 +290,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         myPhoto = null
 
         rotationDegree = 0f
+
+        lastLocation = null
 
         hideKeyBoard()
     }
@@ -313,11 +378,22 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
                     if (myPhoto != null) {
 
-                        storyViewModel.uploadImage(
-                            myPhoto!!,
-                            descEditText?.text.toString(),
-                            rotationDegree
-                        )
+                        if (lastLocation != null) {
+
+                            storyViewModel.uploadImage(
+                                myPhoto!!,
+                                descEditText?.text.toString(),
+                                rotationDegree,
+                                lastLocation!!
+                            )
+                        } else {
+
+                            storyViewModel.uploadImage(
+                                myPhoto!!,
+                                descEditText?.text.toString(),
+                                rotationDegree
+                            )
+                        }
 
                         binding?.apply {
                             rotateBtn.isEnabled = false
@@ -374,7 +450,12 @@ class PreviewFragment : Fragment(), View.OnClickListener {
     }
 
     companion object {
-        private const val REQUIRED_PERMISSIONS = Manifest.permission.CAMERA
+        private const val REQUIRED_CAMERA_PERMISSION = Manifest.permission.CAMERA
+
+        private val REQUIRED_LOCATION_PERMISSONS = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
     }
 
 }

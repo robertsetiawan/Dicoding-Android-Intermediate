@@ -20,9 +20,6 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentStoryDetailBinding
-import com.robertas.storyapp.utils.DATETIME_UI_FORMAT
-import com.robertas.storyapp.utils.formatTime
-import com.robertas.storyapp.utils.parseTime
 
 class StoryDetailFragment : Fragment() {
 
@@ -130,5 +127,11 @@ class StoryDetailFragment : Fragment() {
     private fun startEnterTransition(){
         sharedElementEnterTransition = TransitionInflater.from(requireContext())
             .inflateTransition(android.R.transition.move)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        _binding = null
     }
 }

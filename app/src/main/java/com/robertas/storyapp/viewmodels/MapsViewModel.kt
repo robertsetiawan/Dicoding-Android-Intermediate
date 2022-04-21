@@ -1,6 +1,5 @@
 package com.robertas.storyapp.viewmodels
 
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -34,8 +33,6 @@ class MapsViewModel @Inject constructor(
     }
 
     init {
-
-        Log.i("MapsViewModel", "newInstance: ")
         getAllStories()
     }
 }

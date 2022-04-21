@@ -2,7 +2,6 @@ package com.robertas.storyapp.modules
 
 import android.content.Context
 import androidx.room.Room
-import androidx.room.RoomDatabase
 import com.robertas.storyapp.abstractions.StoryDatabase
 import dagger.Module
 import dagger.Provides

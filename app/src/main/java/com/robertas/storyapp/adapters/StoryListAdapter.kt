@@ -14,7 +14,7 @@ import com.robertas.storyapp.abstractions.IOnItemClickListener
 import com.robertas.storyapp.databinding.StoryCardBinding
 import com.robertas.storyapp.models.domain.Story
 
-class StoryListAdapter : PagingDataAdapter<Story, StoryListAdapter.ViewHolder>(DiffCallBack) {
+class StoryListAdapter : PagingDataAdapter<Story, StoryListAdapter.ViewHolder>(DIFF_CALLBACK) {
 
     lateinit var onItemClickListener: IOnItemClickListener<Story, StoryCardBinding>
 
@@ -29,13 +29,6 @@ class StoryListAdapter : PagingDataAdapter<Story, StoryListAdapter.ViewHolder>(D
         val story = getItem(position)
 
         story?.let { holder.bind(it) }
-    }
-
-
-    object DiffCallBack : DiffUtil.ItemCallback<Story>() {
-        override fun areItemsTheSame(oldItem: Story, newItem: Story) = oldItem.id == newItem.id
-
-        override fun areContentsTheSame(oldItem: Story, newItem: Story) = oldItem == newItem
     }
 
     inner class ViewHolder(private val binding: StoryCardBinding) :
@@ -127,6 +120,15 @@ class StoryListAdapter : PagingDataAdapter<Story, StoryListAdapter.ViewHolder>(D
 
                 binding.expandedLayout.visibility = View.GONE
             }
+        }
+    }
+
+
+    companion object {
+        val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Story>() {
+            override fun areItemsTheSame(oldItem: Story, newItem: Story) = oldItem.id == newItem.id
+
+            override fun areContentsTheSame(oldItem: Story, newItem: Story) = oldItem == newItem
         }
     }
 }
