@@ -18,12 +18,12 @@ object DataDummy {
         val result: ArrayList<Story> = arrayListOf()
 
         if (withLocation) {
-            for (i in 0..9) {
+            for (i in 0..4) {
                 result.add(
                     Story(
                         id = "id-$i",
                         name = "name=$i",
-                        createdAt = "2022-4-20 17:16",
+                        createdAt = "08-Jan-2022 06:34:18",
                         photoUrl = "https://www.google.com/search?q=$i",
                         lat = 0.0,
                         lon = 0.0,
@@ -32,12 +32,12 @@ object DataDummy {
                 )
             }
         } else {
-            for (i in 0..9) {
+            for (i in 0..4) {
                 result.add(
                     Story(
                         id = "id-$i",
                         name = "name=$i",
-                        createdAt = "2022-01-08T06:34:18.598Z",
+                        createdAt = "08-Jan-2022 06:34:18",
                         photoUrl = "https://www.google.com/search?q=$i",
                         lat = null,
                         lon = null,
@@ -69,7 +69,7 @@ object DataDummy {
                 name = it.name,
                 description = it.description,
                 photoUrl = it.photoUrl,
-                createdAt = it.createdAt,
+                createdAt = "2022-01-08T06:34:18.598Z",
                 lat = it.lat,
                 lon = it.lon
             )

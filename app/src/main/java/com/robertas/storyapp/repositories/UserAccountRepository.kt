@@ -47,8 +47,6 @@ class UserAccountRepository @Inject constructor(
         } else {
             return response.error
         }
-
-
     }
 
     override fun isUserLoggedIn(): Boolean {

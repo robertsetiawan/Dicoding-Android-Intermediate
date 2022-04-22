@@ -3,8 +3,8 @@ package com.robertas.storyapp.repositories
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.paging.AsyncPagingDataDiffer
-import androidx.paging.PagingData
+import androidx.paging.PagingSource
+import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -17,17 +17,13 @@ import com.robertas.storyapp.abstractions.IDomainMapper
 import com.robertas.storyapp.abstractions.IStoryService
 import com.robertas.storyapp.abstractions.StoryDatabase
 import com.robertas.storyapp.abstractions.StoryRepository
-import com.robertas.storyapp.adapters.StoryListAdapter
+import com.robertas.storyapp.data.StoryPagingSource
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.network.StoryNetwork
 import com.robertas.storyapp.utils.StoryNetworkMapper
 import com.robertas.storyapp.utils.createTempFile
-import com.robertas.storyapp.viewmodels.noopListUpdateCallback
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -82,6 +78,10 @@ class UserStoryRepositoryTest {
     @After
     fun tearDown() {
         sharedPreferences.edit().clear().apply()
+
+        storyDatabase.clearAllTables()
+
+        storyDatabase.close()
     }
 
     @Test
@@ -189,12 +189,38 @@ class UserStoryRepositoryTest {
     }
 
     @Test
-    fun getPaginatedStories() = runBlockingTest{
-        val pagingData = userStoryRepository.getAllStories()
+    fun whenRefreshPaginatedDataIsSuccess() = runBlockingTest {
+        val storyPagingSource = StoryPagingSource(apiService, networkMapper, sharedPreferences)
 
-        val expectedPagingData = PagingData.from(DataDummy.generateDummyStories(false))
+        val user = DataDummy.generateUserDummy()
 
-        assertEquals(flowOf(expectedPagingData), pagingData)
+        sharedPreferences.edit().apply {
+
+            putString(USER_ID_KEY, user.userId)
+
+            putString(USER_NAME_KEY, user.name)
+
+            putString(USER_TOKEN_KEY, user.token)
+
+            apply()
+        }
+
+        val expectedResult = PagingSource.LoadResult.Page(
+            data = DataDummy.generateDummyStories(false),
+            prevKey = null,
+            nextKey = 2
+        )
+
+        assertEquals(
+            expectedResult,
+            storyPagingSource.load(
+                PagingSource.LoadParams.Refresh(
+                    key = 1,
+                    loadSize = 1,
+                    placeholdersEnabled = false
+                )
+            )
+        )
     }
 
     companion object {

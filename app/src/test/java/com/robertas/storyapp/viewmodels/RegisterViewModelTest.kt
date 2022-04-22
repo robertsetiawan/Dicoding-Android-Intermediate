@@ -3,6 +3,7 @@ package com.robertas.storyapp.viewmodels
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.robertas.storyapp.MainCoroutineRule
 import com.robertas.storyapp.abstractions.UserRepository
+import com.robertas.storyapp.getOrAwaitValue
 import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.repositories.UserAccountRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,6 +17,7 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.junit.MockitoJUnitRunner
+import java.lang.RuntimeException
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
@@ -50,12 +52,25 @@ class RegisterViewModelTest{
     fun `register user then return register state is true`() = mainCoroutineRule.runBlockingTest{
         `when`(userAccountRepository.register("agung", "agungs@gmail.com", "123456")).thenReturn(true)
 
-        val actualRegisterState = registerViewModel.registerState
-
         registerViewModel.register("agung", "agungs@gmail.com", "123456")
+
+        val actualRegisterState = registerViewModel.registerState.getOrAwaitValue()
 
         Mockito.verify(userAccountRepository).register("agung", "agungs@gmail.com", "123456")
 
-        assertEquals(actualRegisterState.value, NetworkResult.Success(true))
+        assertEquals(actualRegisterState, NetworkResult.Success(true))
+    }
+
+    @Test
+    fun `when register failed then register state is error`() = mainCoroutineRule.runBlockingTest {
+        `when`(userAccountRepository.register("", "agungs@gmail.com", "123456")).thenThrow(RuntimeException("nama harus diisi"))
+
+        registerViewModel.register("", "agungs@gmail.com", "123456")
+
+        val actualRegisterState = registerViewModel.registerState.getOrAwaitValue()
+
+        Mockito.verify(userAccountRepository).register("", "agungs@gmail.com", "123456")
+
+        assertEquals(actualRegisterState, NetworkResult.Error("nama harus diisi"))
     }
 }

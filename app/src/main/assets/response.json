@@ -1,0 +1,96 @@
+{
+    "error": false,
+    "message": "Stories fetched successfully",
+    "listStory": [
+    {
+        "id": "story-mgeT7GqEyzIeEP4b",
+        "name": "h",
+        "description": "rt",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650554164458_BIEU0atA.jpg",
+        "createdAt": "2022-04-21T15:16:04.460Z",
+        "lat": 0.5103583,
+        "lon": 101.4492783
+    },
+    {
+        "id": "story-Uyk4Be9QphHcAIwQ",
+        "name": "sikoko",
+        "description": "hdffdd",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650554093442_J9pM_Ne2.jpg",
+        "createdAt": "2022-04-21T15:14:53.447Z",
+        "lat": null,
+        "lon": null
+    },
+    {
+        "id": "story-JPid688FH7EbX1Md",
+        "name": "uzumaki saburo  hyuga",
+        "description": "s",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650554049506_rkv_TtNM.jpg",
+        "createdAt": "2022-04-21T15:14:09.507Z",
+        "lat": 42.3785817,
+        "lon": -71.1157033
+    },
+    {
+        "id": "story-YyyOrdcj9fZGMy8Q",
+        "name": "awer",
+        "description": "why not change yet",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650554012148_-kezZUFi.jpg",
+        "createdAt": "2022-04-21T15:13:32.149Z",
+        "lat": null,
+        "lon": null
+    },
+    {
+        "id": "story-x_J8UKiCM1fortrp",
+        "name": "reviewer33",
+        "description": "test",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650554010098_MrSEyG0N.jpg",
+        "createdAt": "2022-04-21T15:13:30.099Z",
+        "lat": null,
+        "lon": null
+    },
+    {
+        "id": "story-dv6TAXvxIfjT3GQV",
+        "name": "awer",
+        "description": "cat let's go",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650553995114_DGpLapmC.jpg",
+        "createdAt": "2022-04-21T15:13:15.116Z",
+        "lat": null,
+        "lon": null
+    },
+    {
+        "id": "story-g9QJQN9pLS_Bx-Nf",
+        "name": "reviewer33",
+        "description": "test",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650553989754_Dmle0Ycp.jpg",
+        "createdAt": "2022-04-21T15:13:09.756Z",
+        "lat": null,
+        "lon": null
+    },
+    {
+        "id": "story-QaDmrWJOzQhned-B",
+        "name": "awer",
+        "description": "awer",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650553970891_Lr_nceP_.jpg",
+        "createdAt": "2022-04-21T15:12:50.892Z",
+        "lat": null,
+        "lon": null
+    },
+    {
+        "id": "story-X6rCdoZtq0IC7Kzu",
+        "name": "awer",
+        "description": "awer",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650553963887_FHsAvbyk.jpg",
+        "createdAt": "2022-04-21T15:12:43.888Z",
+        "lat": null,
+        "lon": null
+    },
+    {
+        "id": "story-vjgK2HDwfFSGWzrN",
+        "name": "awer",
+        "description": "awer",
+        "photoUrl": "https://story-api.dicoding.dev/images/stories/photos-1650553958416_8tEKX9RC.jpg",
+        "createdAt": "2022-04-21T15:12:38.417Z",
+        "lat": null,
+        "lon": null
+    }
+    ]
+}

@@ -117,7 +117,7 @@ class LoginViewModelTest {
 
         `when`(userAccountRepository.getLanguageMode()).thenReturn(expectedLanguage)
 
-        val actualLanguage = userAccountRepository.getLanguageMode()
+        val actualLanguage = loginViewModel.getLanguageMode()
 
         assertEquals(expectedLanguage, actualLanguage)
 
@@ -125,5 +125,4 @@ class LoginViewModelTest {
 
         Mockito.verify(userAccountRepository).getLanguageMode()
     }
-
 }

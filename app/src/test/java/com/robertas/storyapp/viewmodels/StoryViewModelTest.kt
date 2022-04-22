@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.paging.AsyncPagingDataDiffer
 import androidx.paging.PagingData
 import androidx.recyclerview.widget.ListUpdateCallback
+import com.google.android.gms.maps.model.LatLng
 import com.robertas.storyapp.DataDummy
 import com.robertas.storyapp.MainCoroutineRule
 import com.robertas.storyapp.abstractions.StoryRepository
@@ -29,6 +30,7 @@ import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.junit.MockitoJUnitRunner
 import java.io.File
+import java.lang.RuntimeException
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
@@ -92,6 +94,55 @@ class StoryViewModelTest {
         Mockito.verify(userStoryRepository).postStory(file, "desc", 0f)
 
         assertEquals(NetworkResult.Success(true), actualUploadState)
+    }
+
+    @Test
+    fun `when error upload image then result is error`() = mainCoroutineRule.runBlockingTest {
+        val file = File("src/test/resources/Cover.png")
+
+        `when`(userStoryRepository.postStory(file, "", 0f)).thenThrow(RuntimeException("deskripsi harus diisi"))
+
+        storyViewModel.uploadImage(file, "", 0f)
+
+        val actualUploadState = storyViewModel.uploadStoryState.getOrAwaitValue()
+
+        Mockito.verify(userStoryRepository).postStory(file, "", 0f)
+
+        assertEquals(NetworkResult.Error("deskripsi harus diisi"), actualUploadState)
+    }
+
+    @Test
+    fun `when success upload image with location`() = mainCoroutineRule.runBlockingTest{
+        val file = File("src/test/resources/Cover.png")
+
+        val location = LatLng(0.0, 0.0)
+
+        `when`(userStoryRepository.postStory(file, "desc", 0f, location)).thenReturn(true)
+
+        storyViewModel.uploadImage(file, "desc", 0f, location)
+
+        val actualUploadState = storyViewModel.uploadStoryState.getOrAwaitValue()
+
+        Mockito.verify(userStoryRepository).postStory(file, "desc", 0f, location)
+
+        assertEquals(NetworkResult.Success(true), actualUploadState)
+    }
+
+    @Test
+    fun `when error upload image with location`() = mainCoroutineRule.runBlockingTest{
+        val file = File("src/test/resources/Cover.png")
+
+        val location = LatLng(0.0, 0.0)
+
+        `when`(userStoryRepository.postStory(file, "", 0f, location)).thenThrow(RuntimeException("deskripsi harus diisi"))
+
+        storyViewModel.uploadImage(file, "desc", 0f, location)
+
+        val actualUploadState = storyViewModel.uploadStoryState.getOrAwaitValue()
+
+        Mockito.verify(userStoryRepository).postStory(file, "desc", 0f, location)
+
+        assertEquals(NetworkResult.Error("deskripsi harus diisi"), actualUploadState)
     }
 
     @Test

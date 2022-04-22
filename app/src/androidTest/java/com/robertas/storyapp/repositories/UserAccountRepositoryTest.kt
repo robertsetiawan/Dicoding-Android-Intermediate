@@ -92,8 +92,6 @@ class UserAccountRepositoryTest {
 
         val name = "budi"
 
-
-
         val job = launch {
             val error: Boolean = userAccountRepository.register(name, email, password)
 
