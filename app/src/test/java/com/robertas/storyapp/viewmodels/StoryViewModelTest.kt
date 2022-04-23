@@ -1,25 +1,29 @@
 package com.robertas.storyapp.viewmodels
 
+import android.location.Location
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.lifecycle.MutableLiveData
 import androidx.paging.AsyncPagingDataDiffer
 import androidx.paging.PagingData
 import androidx.recyclerview.widget.ListUpdateCallback
 import com.google.android.gms.maps.model.LatLng
+import com.robertas.storyapp.CoroutinesTestRule
 import com.robertas.storyapp.DataDummy
 import com.robertas.storyapp.MainCoroutineRule
 import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.adapters.StoryListAdapter
 import com.robertas.storyapp.getOrAwaitValue
-import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.NetworkResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -30,7 +34,6 @@ import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.junit.MockitoJUnitRunner
 import java.io.File
-import java.lang.RuntimeException
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
@@ -39,7 +42,7 @@ class StoryViewModelTest {
     var instantExecutorRule = InstantTaskExecutorRule()
 
     @get:Rule
-    var mainCoroutineRule = MainCoroutineRule()
+    var coroutinesTestRule = CoroutinesTestRule()
 
     @Mock
     private lateinit var userStoryRepository: StoryRepository
@@ -49,27 +52,41 @@ class StoryViewModelTest {
 
     private lateinit var storyViewModel: StoryViewModel
 
+    private val dummyToken = DataDummy.generateDummyToken()
+
     @Before
     fun setUp() {
         storyViewModel = StoryViewModel(userStoryRepository, userAccountRepository)
     }
 
     @Test
-    fun `when finish navigating then upload state is loading`() {
-        storyViewModel.doneNavigating()
+    fun `when Get Paginated Story should not null`() = runBlocking {
+        val dummyData = DataDummy.generateDummyStories(false)
 
-        val actualUploadState = storyViewModel.uploadStoryState.getOrAwaitValue()
+        val data = PagingData.from(dummyData)
 
-        assertEquals(NetworkResult.Loading, actualUploadState)
-    }
+        `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
 
-    @Test
-    fun `when invalidate story then story is invalid`() {
-        storyViewModel.invalidateStories()
+        `when`(userStoryRepository.getAllStories(dummyToken)).thenReturn(flowOf(data))
 
-        val actualIsStoryValid = storyViewModel.isStoriesInvalid.getOrAwaitValue()
+        val differ = AsyncPagingDataDiffer(
+            diffCallback = StoryListAdapter.DIFF_CALLBACK,
+            updateCallback = noopListUpdateCallback,
+            mainDispatcher = coroutinesTestRule.testDispatcher,
+            workerDispatcher = coroutinesTestRule.testDispatcher,
+        )
 
-        assertTrue(actualIsStoryValid)
+        val pagingData = storyViewModel.getPaginatedData().getOrAwaitValue()
+
+        differ.submitData(pagingData)
+
+        Mockito.verify(userStoryRepository).getAllStories(dummyToken)
+
+        assertNotNull(differ.snapshot())
+
+        assertEquals(dummyData.size, differ.snapshot().size)
+
+        assertEquals(dummyData[0].id, differ.snapshot()[0]?.id)
     }
 
     @Test
@@ -82,68 +99,93 @@ class StoryViewModelTest {
     }
 
     @Test
-    fun `when upload image then error is false`() = mainCoroutineRule.runBlockingTest {
-        val file = File("src/test/resources/Cover.png")
+    fun `when invalidate story then story is invalid`() {
+        storyViewModel.invalidateStories()
 
-        `when`(userStoryRepository.postStory(file, "desc", 0f)).thenReturn(true)
+        val actualIsStoryValid = storyViewModel.isStoriesInvalid.getOrAwaitValue()
 
-        storyViewModel.uploadImage(file, "desc", 0f)
-
-        val actualUploadState = storyViewModel.uploadStoryState.getOrAwaitValue()
-
-        Mockito.verify(userStoryRepository).postStory(file, "desc", 0f)
-
-        assertEquals(NetworkResult.Success(true), actualUploadState)
+        assertTrue(actualIsStoryValid)
     }
 
     @Test
-    fun `when error upload image then result is error`() = mainCoroutineRule.runBlockingTest {
+    fun `when upload image then error is false`() = runTest {
         val file = File("src/test/resources/Cover.png")
 
-        `when`(userStoryRepository.postStory(file, "", 0f)).thenThrow(RuntimeException("deskripsi harus diisi"))
+        `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
 
-        storyViewModel.uploadImage(file, "", 0f)
+        `when`(userStoryRepository.postStory(dummyToken, file, "desc", 0f)).thenReturn(flowOf(NetworkResult.Success(true)))
 
-        val actualUploadState = storyViewModel.uploadStoryState.getOrAwaitValue()
+        storyViewModel.uploadImage(file, "desc", 0f).collect { result ->
 
-        Mockito.verify(userStoryRepository).postStory(file, "", 0f)
+            assert(result is NetworkResult.Success)
 
-        assertEquals(NetworkResult.Error("deskripsi harus diisi"), actualUploadState)
+            assertTrue((result as NetworkResult.Success).data)
+
+            Mockito.verify(userStoryRepository).postStory(dummyToken, file, "desc", 0f)
+        }
     }
 
+
     @Test
-    fun `when success upload image with location`() = mainCoroutineRule.runBlockingTest{
+    fun `when error upload image then result is error`() = runTest {
+        val file = File("src/test/resources/Cover.png")
+
+        `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
+
+        `when`(userStoryRepository.postStory(dummyToken, file, "desc", 0f)).thenReturn(flowOf(NetworkResult.Error("data harus lengkap")))
+
+        storyViewModel.uploadImage(file, "desc", 0f).collect { result ->
+
+            assert(result is NetworkResult.Error)
+
+            assertEquals("data harus lengkap", (result as NetworkResult.Error).message)
+
+            Mockito.verify(userStoryRepository).postStory(dummyToken, file, "desc", 0f)
+        }
+    }
+
+
+    @Test
+    fun `when success upload story with location then error is false`() = runTest {
         val file = File("src/test/resources/Cover.png")
 
         val location = LatLng(0.0, 0.0)
 
-        `when`(userStoryRepository.postStory(file, "desc", 0f, location)).thenReturn(true)
+        `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
 
-        storyViewModel.uploadImage(file, "desc", 0f, location)
+        `when`(userStoryRepository.postStory(dummyToken, file, "desc", 0f, location)).thenReturn(flowOf(NetworkResult.Success(true)))
 
-        val actualUploadState = storyViewModel.uploadStoryState.getOrAwaitValue()
+        storyViewModel.uploadImage(file, "desc", 0f, location).collect { result ->
 
-        Mockito.verify(userStoryRepository).postStory(file, "desc", 0f, location)
+            assert(result is NetworkResult.Success)
 
-        assertEquals(NetworkResult.Success(true), actualUploadState)
+            assertTrue((result as NetworkResult.Success).data)
+
+            Mockito.verify(userStoryRepository).postStory(dummyToken, file, "desc", 0f, location)
+        }
     }
 
+
     @Test
-    fun `when error upload image with location`() = mainCoroutineRule.runBlockingTest{
+    fun `when error upload story with location then error is true`() = runTest {
         val file = File("src/test/resources/Cover.png")
 
         val location = LatLng(0.0, 0.0)
 
-        `when`(userStoryRepository.postStory(file, "", 0f, location)).thenThrow(RuntimeException("deskripsi harus diisi"))
+        `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
 
-        storyViewModel.uploadImage(file, "desc", 0f, location)
+        `when`(userStoryRepository.postStory(dummyToken, file, "desc", 0f, location)).thenReturn(flowOf(NetworkResult.Error("lokasi tidak ditemukan")))
 
-        val actualUploadState = storyViewModel.uploadStoryState.getOrAwaitValue()
+        storyViewModel.uploadImage(file, "desc", 0f, location).collect { result ->
 
-        Mockito.verify(userStoryRepository).postStory(file, "desc", 0f, location)
+            assert(result is NetworkResult.Error)
 
-        assertEquals(NetworkResult.Error("deskripsi harus diisi"), actualUploadState)
+            assertEquals("lokasi tidak ditemukan", (result as NetworkResult.Error).message)
+
+            Mockito.verify(userStoryRepository).postStory(dummyToken, file, "desc", 0f, location)
+        }
     }
+
 
     @Test
     fun `get camera mode return saved camera mode`() {
@@ -160,43 +202,6 @@ class StoryViewModelTest {
         Mockito.verify(userAccountRepository).getCameraMode()
 
         Mockito.verify(userAccountRepository).setCameraMode(expectedCameraMode)
-    }
-
-    @Test
-    fun `when Get Paginated Story should not null`() = mainCoroutineRule.runBlockingTest {
-
-        val dummyData = DataDummy.generateDummyStories(false)
-
-        val data = PagingData.from(dummyData)
-
-        val stories = MutableLiveData<PagingData<Story>>()
-
-        stories.value = data
-
-        `when`(userStoryRepository.getAllStories()).thenReturn(flowOf(data))
-
-        val differ = AsyncPagingDataDiffer(
-            diffCallback = StoryListAdapter.DIFF_CALLBACK,
-            updateCallback = noopListUpdateCallback,
-            mainDispatcher = mainCoroutineRule.dispatcher,
-            workerDispatcher = mainCoroutineRule.dispatcher,
-        )
-
-        mainCoroutineRule.launch {
-            storyViewModel.getPaginatedStories().collectLatest {
-                differ.submitData(it)
-            }
-        }
-
-        advanceUntilIdle()
-
-        Mockito.verify(userStoryRepository).getAllStories()
-
-        assertNotNull(differ.snapshot())
-
-        assertEquals(dummyData.size, differ.snapshot().size)
-
-        assertEquals(dummyData[0].id, differ.snapshot()[0]?.id)
     }
 }
 

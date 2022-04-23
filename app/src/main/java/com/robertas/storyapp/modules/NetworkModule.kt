@@ -53,5 +53,5 @@ object NetworkModule {
             .create(IStoryService::class.java)
     }
 
-    private const val API_URL = "https://story-api.dicoding.dev/v1/"
+    var API_URL = "https://story-api.dicoding.dev/v1/"
 }

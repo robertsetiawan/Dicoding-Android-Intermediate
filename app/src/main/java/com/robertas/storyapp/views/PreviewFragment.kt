@@ -19,9 +19,9 @@ import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -42,9 +42,10 @@ import com.robertas.storyapp.utils.rotateBitmap
 import com.robertas.storyapp.utils.uriToFile
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.File
-
 
 @AndroidEntryPoint
 class PreviewFragment : Fragment(), View.OnClickListener {
@@ -69,7 +70,9 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
-    private var lastLocation: LatLng? = null
+    private var lastLocation: Location? = null
+
+    private var uploadJob: Job = Job()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -90,7 +93,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
         bindParamToFragment()
 
-        descEditText = binding?.descEt
+        descEditText = binding?.descPortraitEt
 
         binding?.cameraBtn?.setOnClickListener(this)
 
@@ -159,28 +162,18 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-
-            requestMultiplePermission.launch(REQUIRED_LOCATION_PERMISSONS)
+            requestMultiplePermission.launch(REQUIRED_LOCATION_PERMISSIONS)
 
         } else {
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
 
-                location?.apply {
-                    lastLocation = LatLng(this.latitude, this.longitude)
-                }
+                lastLocation = location
 
                 if (location == null) {
                     lastLocation = null
 
-                    binding?.root?.let {
-                        Snackbar.make(
-                            it,
-                            "Last location is null",
-                            Snackbar.LENGTH_SHORT
-                        ).show()
-                    }
+                    showSnackBar("Last location is null")
                 }
-
             }
         }
     }
@@ -221,63 +214,6 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
             setNavigationOnClickListener { navController.navigateUp() }
         }
-
-        val uploadObserver = Observer<NetworkResult<Boolean?>> { result ->
-            when (result) {
-                is NetworkResult.Loading -> {}
-
-                is NetworkResult.Success -> {
-
-                    binding?.apply {
-                        rotateBtn.isEnabled = true
-
-                        uploadBtn.visibility = View.VISIBLE
-
-                        progressLoading.visibility = View.GONE
-                    }
-
-                    binding?.root?.let {
-                        Snackbar.make(
-                            it,
-                            getString(R.string.success_to_create_story),
-                            Snackbar.LENGTH_SHORT
-                        ).show()
-                    }
-
-                    storyViewModel.invalidateStories()
-
-                    navController.navigateUp()
-
-                    binding?.uploadBtn?.visibility = View.VISIBLE
-
-                    binding?.progressLoading?.visibility = View.GONE
-
-                    storyViewModel.doneNavigating()
-                }
-
-                is NetworkResult.Error -> {
-                    binding?.apply {
-                        rotateBtn.isEnabled = true
-
-                        uploadBtn.visibility = View.VISIBLE
-
-                        progressLoading.visibility = View.GONE
-                    }
-
-                    binding?.root?.let {
-                        Snackbar.make(
-                            it,
-                            result.message,
-                            Snackbar.LENGTH_SHORT
-                        ).show()
-                    }
-
-                    storyViewModel.doneNavigating()
-                }
-            }
-        }
-
-        storyViewModel.uploadStoryState.observe(viewLifecycleOwner, uploadObserver)
     }
 
     override fun onDestroyView() {
@@ -357,6 +293,78 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         }
     }
 
+
+    private fun setButtonVisibility(isVisible: Boolean){
+        binding?.apply {
+            rotateBtn.isEnabled = isVisible
+
+            uploadBtn.isVisible = isVisible
+        }
+    }
+
+
+    private fun setLoadingStatus(isLoading: Boolean){
+        binding?.progressLoading?.isVisible = isLoading
+    }
+
+    private fun showSnackBar(message: String){
+        binding?.root?.let {
+            Snackbar.make(
+                it,
+                message,
+                Snackbar.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun processUpload(file: File, desc: String, rotation: Float, location: Location?) {
+
+        viewLifecycleOwner.lifecycleScope.launchWhenResumed {
+
+            if (uploadJob.isActive) uploadJob.cancel()
+
+            uploadJob = launch {
+
+                val uploadFlow = if (location != null) storyViewModel.uploadImage(
+                    file, desc, rotation,
+                    LatLng(location.latitude, location.longitude)
+                ) else storyViewModel.uploadImage(file, desc, rotation)
+
+                uploadFlow.collect { result ->
+
+                    when (result) {
+                        is NetworkResult.Loading -> {
+                            setButtonVisibility(false)
+
+                            setLoadingStatus(true)
+                        }
+
+                        is NetworkResult.Success -> {
+
+                            setButtonVisibility(true)
+
+                            setLoadingStatus(false)
+
+                            showSnackBar(getString(R.string.success_to_create_story))
+
+                            storyViewModel.invalidateStories()
+
+                            navController.navigateUp()
+                        }
+
+                        is NetworkResult.Error -> {
+                            setButtonVisibility(true)
+
+                            setLoadingStatus(false)
+
+                            showSnackBar(result.message)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun onClick(view: View) {
         when (view.id) {
 
@@ -378,30 +386,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
                     if (myPhoto != null) {
 
-                        if (lastLocation != null) {
-
-                            storyViewModel.uploadImage(
-                                myPhoto!!,
-                                descEditText?.text.toString(),
-                                rotationDegree,
-                                lastLocation!!
-                            )
-                        } else {
-
-                            storyViewModel.uploadImage(
-                                myPhoto!!,
-                                descEditText?.text.toString(),
-                                rotationDegree
-                            )
-                        }
-
-                        binding?.apply {
-                            rotateBtn.isEnabled = false
-
-                            uploadBtn.visibility = View.GONE
-
-                            progressLoading.visibility = View.VISIBLE
-                        }
+                        processUpload(myPhoto!!, descEditText?.text.toString().trim(), rotationDegree, lastLocation)
 
                     } else {
                         binding?.root?.let {
@@ -413,7 +398,6 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                         }
                     }
                 }
-
             }
 
             R.id.rotate_btn -> {
@@ -422,7 +406,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
                     incrementRotation()
 
-                    lifecycleScope.launch {
+                    viewLifecycleOwner.lifecycleScope.launch {
                         val rotated = rotateBitmap(file, rotationDegree)
 
                         binding?.previewImg?.setImageBitmap(rotated)
@@ -452,7 +436,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
     companion object {
         private const val REQUIRED_CAMERA_PERMISSION = Manifest.permission.CAMERA
 
-        private val REQUIRED_LOCATION_PERMISSONS = arrayOf(
+        private val REQUIRED_LOCATION_PERMISSIONS = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         )

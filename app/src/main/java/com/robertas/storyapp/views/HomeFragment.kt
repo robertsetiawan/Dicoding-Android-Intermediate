@@ -17,7 +17,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.IOnItemClickListener
@@ -26,8 +30,11 @@ import com.robertas.storyapp.adapters.StoryListAdapter
 import com.robertas.storyapp.databinding.FragmentHomeBinding
 import com.robertas.storyapp.databinding.StoryCardBinding
 import com.robertas.storyapp.models.domain.Story
+import com.robertas.storyapp.utils.EspressoIdlingResource
+import com.robertas.storyapp.utils.wrapEspressoIdlingResource
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -44,7 +51,11 @@ class HomeFragment : Fragment(), View.OnClickListener,
 
     private val storyViewModel by activityViewModels<StoryViewModel>()
 
+    private lateinit var storyListAdapter: StoryListAdapter
+
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
+
+    private var storyList: RecyclerView? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -58,19 +69,51 @@ class HomeFragment : Fragment(), View.OnClickListener,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        swipeRefreshLayout = binding?.swipeRefresh
-
-        binding?.floatingBtn?.setOnClickListener(this)
+        storyList = binding?.storyList
 
         setupNavigation()
 
-        setupStoryListObserver()
+        setupSwipeRefreshLayout()
+
+        setupRecyclerView()
+
+        loadStories()
+
+        binding?.floatingBtn?.setOnClickListener(this)
     }
 
+    private fun loadStories() {
 
-    private fun setupStoryListObserver() {
+        storyViewModel.isStoriesInvalid.observe(viewLifecycleOwner) { isInvalid ->
+            if (isInvalid) {
 
-        val storyListAdapter = StoryListAdapter()
+                storyListAdapter.refresh()
+
+                storyViewModel.validateStories()
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            storyViewModel.getPaginatedData().observe(viewLifecycleOwner) { pagingData ->
+                storyListAdapter.submitData(viewLifecycleOwner.lifecycle, pagingData)
+            }
+        }
+    }
+
+    private fun setupSwipeRefreshLayout() {
+
+        swipeRefreshLayout = binding?.swipeRefresh
+
+        swipeRefreshLayout?.setOnRefreshListener {
+            storyListAdapter.refresh()
+        }
+    }
+
+    private fun setupRecyclerView() {
+
+        storyListAdapter = StoryListAdapter()
+
+        val linearLayoutManager = LinearLayoutManager(requireContext())
 
         storyListAdapter.onItemClickListener =
             object : IOnItemClickListener<Story, StoryCardBinding> {
@@ -92,23 +135,44 @@ class HomeFragment : Fragment(), View.OnClickListener,
                 }
             }
 
+        viewLifecycleOwner.lifecycleScope.launch {
 
-        val storyStatusObserver = Observer<Boolean> { invalid ->
-            if (invalid) {
-                storyListAdapter.refresh()
+                storyListAdapter.loadStateFlow.collect { loadStates ->
 
-                storyViewModel.validateStories()
-            }
+                    swipeRefreshLayout?.isRefreshing = loadStates.refresh is LoadState.Loading
+
+                    if (loadStates.refresh is LoadState.NotLoading && loadStates.prepend is LoadState.Loading) {
+                        storyList?.scrollToPosition(0)
+                    }
+
+                    val showEmptyList = (loadStates.mediator?.refresh is LoadState.Error && storyListAdapter.itemCount == 0) || (loadStates.mediator?.refresh is LoadState.NotLoading && storyListAdapter.itemCount == 0)
+
+                    binding?.emptyLayout?.isVisible = showEmptyList
+
+                    storyList?.isVisible = !showEmptyList
+
+                    val errorState = loadStates.source.append as? LoadState.Error
+                        ?: loadStates.source.prepend as? LoadState.Error
+                        ?: loadStates.append as? LoadState.Error
+                        ?: loadStates.prepend as? LoadState.Error
+
+                    errorState?.let { state ->
+
+                        binding?.root?.let {
+                            Snackbar.make(it, state.error.toString(), Snackbar.LENGTH_SHORT).show()
+                        }
+                    }
+                }
         }
 
-        storyViewModel.isStoriesInvalid.observe(viewLifecycleOwner, storyStatusObserver)
-
-        binding?.storyList?.apply {
+        storyList?.apply {
             adapter = storyListAdapter.withLoadStateFooter(
                 footer = LoadingStateAdapter {
                     storyListAdapter.retry()
                 }
             )
+
+            layoutManager = linearLayoutManager
 
             postponeEnterTransition()
 
@@ -117,44 +181,6 @@ class HomeFragment : Fragment(), View.OnClickListener,
                     startPostponedEnterTransition()
                     true
                 }
-        }
-
-        lifecycleScope.launch {
-            storyListAdapter.loadStateFlow.collectLatest { loadStates ->
-                swipeRefreshLayout?.isRefreshing = loadStates.refresh is LoadState.Loading
-
-                if (loadStates.refresh is LoadState.NotLoading && loadStates.prepend is LoadState.Loading) {
-                    binding?.storyList?.scrollToPosition(0)
-                }
-
-                binding?.storyList?.isVisible =
-                    loadStates.source.refresh is LoadState.NotLoading || loadStates.mediator?.refresh is LoadState.NotLoading
-
-                binding?.emptyLayout?.isVisible =
-                    loadStates.mediator?.refresh is LoadState.Error && storyListAdapter.itemCount == 0
-
-                val errorState = loadStates.source.append as? LoadState.Error
-                    ?: loadStates.source.prepend as? LoadState.Error
-                    ?: loadStates.append as? LoadState.Error
-                    ?: loadStates.prepend as? LoadState.Error
-
-                errorState?.let { state ->
-
-                    binding?.root?.let {
-                        Snackbar.make(it, state.error.toString(), Snackbar.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            storyViewModel.getPaginatedStories().collectLatest {
-                storyListAdapter.submitData(lifecycle, it)
-            }
-        }
-
-        swipeRefreshLayout?.setOnRefreshListener {
-            storyListAdapter.refresh()
         }
     }
 

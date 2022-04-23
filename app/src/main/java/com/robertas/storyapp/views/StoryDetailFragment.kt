@@ -58,23 +58,23 @@ class StoryDetailFragment : Fragment() {
 
         binding?.apply {
 
-            storyImg.transitionName = "picture_${story.id}"
+            storyDetailImg.transitionName = "picture_${story.id}"
 
-            storyImg.contentDescription = story.description
+            storyDetailImg.contentDescription = story.description
 
-            nameTv.transitionName = "name_${story.id}"
+            nameDetailTv.transitionName = "name_${story.id}"
 
-            fullDescTv.transitionName = "desc_${story.id}"
+            fullDescDetailTv.transitionName = "desc_${story.id}"
 
-            timeTv.transitionName = "time_${story.id}"
+            timeDetailTv.transitionName = "time_${story.id}"
 
-            loadImage(storyImg, story.photoUrl)
+            loadImage(storyDetailImg, story.photoUrl)
 
-            nameTv.text = story.name
+            nameDetailTv.text = story.name
 
-            fullDescTv.text = story.description
+            fullDescDetailTv.text = story.description
 
-            timeTv.text = story.createdAt
+            timeDetailTv.text = story.createdAt
         }
     }
 
@@ -117,7 +117,7 @@ class StoryDetailFragment : Fragment() {
         val appBarConfiguration =
             AppBarConfiguration(setOf(R.id.homeFragment))
 
-        binding?.toolbarFragment?.apply {
+        binding?.storyDetailToolbarFragment?.apply {
             setupWithNavController(navController, appBarConfiguration)
 
             setNavigationOnClickListener { navController.navigateUp() }

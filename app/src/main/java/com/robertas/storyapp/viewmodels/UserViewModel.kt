@@ -8,39 +8,20 @@ import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.User
 import com.robertas.storyapp.models.enums.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(
+class UserViewModel @Inject constructor(
     private val userAccountRepository: UserRepository
-): ViewModel(), INavigation {
-    override fun doneNavigating() {
-        _loginState.value = NetworkResult.Loading
-    }
+): ViewModel(){
 
-    private val _loginState = MutableLiveData<NetworkResult<User?>>()
+    suspend fun login(email: String, password: String) = userAccountRepository.login(email, password)
 
-    val loginState get() = _loginState
-
-    fun login(email: String, password: String) {
-
-        _loginState.value = NetworkResult.Loading
-
-        viewModelScope.launch {
-            try {
-
-                val user = userAccountRepository.login(email, password)
-
-                _loginState.value = NetworkResult.Success(user)
-
-                user?.let { userAccountRepository.setLoggedInUser(it) }
-
-            } catch (e: Exception) {
-                _loginState.value = NetworkResult.Error(e.message.toString())
-            }
-        }
-    }
+    suspend fun register(name: String,
+                         email: String,
+                         password: String) = userAccountRepository.register(name, email, password)
 
     fun isUserLoggedIn() = userAccountRepository.isUserLoggedIn()
 

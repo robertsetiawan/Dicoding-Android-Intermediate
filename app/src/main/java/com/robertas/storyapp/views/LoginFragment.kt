@@ -8,24 +8,26 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ProgressBar
-import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentLoginBinding
-import com.robertas.storyapp.models.domain.User
 import com.robertas.storyapp.models.enums.NetworkResult
-import com.robertas.storyapp.viewmodels.LoginViewModel
+import com.robertas.storyapp.viewmodels.UserViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class LoginFragment : Fragment(), View.OnClickListener {
 
-    private val loginViewModel by viewModels<LoginViewModel>()
+    private val userViewModel by viewModels<UserViewModel>()
 
     private lateinit var navController: NavController
 
@@ -33,9 +35,11 @@ class LoginFragment : Fragment(), View.OnClickListener {
 
     private val binding get() = _binding
 
-    private var loginButton: Button ?= null
+    private var loginButton: Button? = null
 
-    private var loadingProgressBar : ProgressBar ?= null
+    private var loadingProgressBar: ProgressBar? = null
+
+    private var loginJob: Job = Job()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -53,7 +57,7 @@ class LoginFragment : Fragment(), View.OnClickListener {
 
         loginButton = binding?.loginBtn
 
-        loadingProgressBar = binding?.loadingProgress
+        loadingProgressBar = binding?.progressLoading
 
         binding?.registerBtn?.setOnClickListener(this)
 
@@ -63,53 +67,8 @@ class LoginFragment : Fragment(), View.OnClickListener {
     }
 
     private fun setupLoginObserver() {
-        val loginObserver = Observer<NetworkResult<User?>> { result ->
-            when(result) {
-                is NetworkResult.Loading -> {}
 
-                is NetworkResult.Error -> {
-
-                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
-
-                    binding?.apply {
-                        registerBtn.isEnabled = true
-
-                        loginBtn.visibility = View.VISIBLE
-
-                        progressLoading.visibility = View.GONE
-                    }
-
-                    loginViewModel.doneNavigating()
-                }
-
-                is NetworkResult.Success -> {
-
-                    binding?.apply {
-                        registerBtn.isEnabled = true
-
-                        loginBtn.visibility = View.VISIBLE
-
-                        progressLoading.visibility = View.GONE
-                    }
-
-                    val actionToHomeFragment = LoginFragmentDirections.actionLoginFragmentToHomeFragment()
-
-                    binding?.root?.let {
-                        Snackbar.make(it, getString(R.string.welcome, result.data?.name), Snackbar.LENGTH_SHORT).show()
-                    }
-
-                    navController.navigate(actionToHomeFragment)
-
-
-
-                    loginViewModel.doneNavigating()
-                }
-            }
-        }
-
-        loginViewModel.loginState.observe(viewLifecycleOwner, loginObserver)
-
-        if (loginViewModel.isUserLoggedIn()) {
+        if (userViewModel.isUserLoggedIn()) {
             val actionToHomeFragment = LoginFragmentDirections.actionLoginFragmentToHomeFragment()
 
             navController.navigate(actionToHomeFragment)
@@ -126,6 +85,8 @@ class LoginFragment : Fragment(), View.OnClickListener {
         loginButton = null
 
         loadingProgressBar = null
+
+        if (loginJob.isActive) loginJob.cancel()
     }
 
     override fun onClick(view: View) {
@@ -135,18 +96,76 @@ class LoginFragment : Fragment(), View.OnClickListener {
             R.id.login_btn -> {
                 hideKeyBoard()
 
-                binding?.apply {
-                    registerBtn.isEnabled = false
-
-                    loginBtn.visibility = View.GONE
-
-                    progressLoading.visibility = View.VISIBLE
-                }
-
-                loginViewModel.login(binding?.emailEt?.text.toString(), binding?.passwordEt?.text.toString())
+                processLogin(
+                    binding?.emailEt?.text.toString().trim(),
+                    binding?.passwordEt?.text.toString()
+                )
             }
 
             else -> return
+        }
+    }
+
+    private fun setButtonVisibility(isVisible: Boolean) {
+        binding?.apply {
+            registerBtn.isEnabled = isVisible
+
+            loginBtn.isVisible = isVisible
+        }
+    }
+
+    private fun setLoadingStatus(isVisible: Boolean) {
+        loadingProgressBar?.isVisible = isVisible
+    }
+
+    private fun showSnackBar(message: String) {
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun processLogin(email: String, password: String) {
+
+        lifecycleScope.launchWhenResumed {
+
+            if (loginJob.isActive) loginJob.cancel()
+
+            loginJob = launch {
+
+                userViewModel.login(email, password)
+                    .collect { result ->
+                        when (result) {
+                            is NetworkResult.Loading -> {
+                                setButtonVisibility(false)
+
+                                setLoadingStatus(true)
+                            }
+
+                            is NetworkResult.Error -> {
+
+                                showSnackBar(result.message)
+
+                                setButtonVisibility(true)
+
+                                setLoadingStatus(false)
+                            }
+
+                            is NetworkResult.Success -> {
+
+                                setButtonVisibility(true)
+
+                                setLoadingStatus(false)
+
+                                showSnackBar(getString(R.string.welcome, result.data?.name))
+
+                                val actionToHomeFragment =
+                                    LoginFragmentDirections.actionLoginFragmentToHomeFragment()
+
+                                navController.navigate(actionToHomeFragment)
+                            }
+                        }
+                    }
+            }
         }
     }
 

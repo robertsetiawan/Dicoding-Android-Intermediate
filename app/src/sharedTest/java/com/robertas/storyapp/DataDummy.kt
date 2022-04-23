@@ -54,9 +54,9 @@ object DataDummy {
         val user = generateUserDummy()
 
         return UserResponse(
-            message = "ok",
+            message = "error is $isError",
             isError,
-            UserNetwork(userId = user.userId, name = user.name, token = user.token)
+            if (isError) null else UserNetwork(userId = user.userId, name = user.name, token = user.token)
         )
     }
 
@@ -80,5 +80,9 @@ object DataDummy {
 
     fun generateBaseResponseDummy(): UserResponse {
         return UserResponse("ok", true, null)
+    }
+
+    fun generateDummyToken(): String {
+        return "Bearer token1234567909009102i310391"
     }
 }

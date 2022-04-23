@@ -18,7 +18,7 @@ import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentSettingBinding
 import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.LanguageMode
-import com.robertas.storyapp.viewmodels.LoginViewModel
+import com.robertas.storyapp.viewmodels.UserViewModel
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -33,7 +33,7 @@ class SettingFragment : Fragment(), View.OnClickListener {
 
     private val storyViewModel by viewModels<StoryViewModel>()
 
-    private val loginViewModel by viewModels<LoginViewModel>()
+    private val loginViewModel by viewModels<UserViewModel>()
 
     private var cameraDropdown: AutoCompleteTextView? = null
 

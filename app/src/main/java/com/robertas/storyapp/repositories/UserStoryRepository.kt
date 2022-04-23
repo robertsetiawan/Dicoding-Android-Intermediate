@@ -1,6 +1,5 @@
 package com.robertas.storyapp.repositories
 
-import android.content.SharedPreferences
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -12,12 +11,15 @@ import com.robertas.storyapp.abstractions.StoryDatabase
 import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.data.StoryRemoteMediator
 import com.robertas.storyapp.models.domain.Story
+import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.models.network.StoryNetwork
 import com.robertas.storyapp.models.network.StoryResponse
 import com.robertas.storyapp.utils.reduceThenRotateFileImage
+import com.robertas.storyapp.utils.wrapEspressoIdlingResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -29,134 +31,130 @@ import javax.inject.Inject
 class UserStoryRepository @Inject constructor(
     override val apiService: IStoryService,
     override val networkMapper: IDomainMapper<StoryNetwork, Story>,
-    override val pref: SharedPreferences,
     override val storyDatabase: StoryDatabase,
 ) : StoryRepository() {
-    override suspend fun postStory(file: File, description: String, rotation: Float): Boolean {
+    override suspend fun postStory(
+        token: String,
+        file: File,
+        description: String,
+        rotation: Float
+    ): Flow<NetworkResult<Boolean>> = flow {
 
-        val token = pref.getString(UserAccountRepository.USER_TOKEN_KEY, "")
+        wrapEspressoIdlingResource {
 
-        val authToken = "Bearer $token"
+            emit(NetworkResult.Loading)
 
-        val response: StoryResponse
+            val reducedFile = reduceThenRotateFileImage(file, rotation)
 
-        if (token.isNullOrBlank()) {
+            val desc = description.toRequestBody("text/plain".toMediaType())
 
-            throw Exception(IN_SESSION_TIMEOUT)
+            val img = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
 
-        } else {
+            val multiPart = MultipartBody.Part.createFormData(
+                "photo",
+                reducedFile.name,
+                img
+            )
 
-            withContext(Dispatchers.IO){
-
-                val reducedFile = reduceThenRotateFileImage(file, rotation)
-
-                val desc = description.toRequestBody("text/plain".toMediaType())
-
-                val img = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-
-                val multiPart = MultipartBody.Part.createFormData(
-                    "photo",
-                    reducedFile.name,
-                    img)
-
-                response = apiService.postStory(authToken, multiPart, desc)
+            try {
+                val response: StoryResponse = apiService.postStory(token, multiPart, desc)
 
                 if (response.error) {
-                    throw Exception(response.message)
+                    emit(NetworkResult.Error(response.message))
+                } else {
+                    emit(NetworkResult.Success(!response.error))
                 }
+            } catch (e: Exception) {
+                emit(NetworkResult.Error(e.message.toString()))
             }
-
-            return !response.error
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
     override suspend fun postStory(
+        token: String,
         file: File,
         description: String,
         rotation: Float,
         latLng: LatLng
-    ): Boolean {
-        val token = pref.getString(UserAccountRepository.USER_TOKEN_KEY, "")
+    ): Flow<NetworkResult<Boolean>> = flow {
 
-        val authToken = "Bearer $token"
+        wrapEspressoIdlingResource {
 
-        val response: StoryResponse
+            emit(NetworkResult.Loading)
 
-        if (token.isNullOrBlank()) {
+            val reducedFile = reduceThenRotateFileImage(file, rotation)
 
-            throw Exception(IN_SESSION_TIMEOUT)
+            val desc = description.toRequestBody("text/plain".toMediaType())
 
-        } else {
+            val lat = latLng.latitude.toString().toRequestBody("text/plain".toMediaType())
 
-            withContext(Dispatchers.IO){
+            val lon = latLng.longitude.toString().toRequestBody("text/plain".toMediaType())
 
-                val reducedFile = reduceThenRotateFileImage(file, rotation)
+            val img = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
 
-                val desc = description.toRequestBody("text/plain".toMediaType())
+            val multiPart = MultipartBody.Part.createFormData(
+                "photo",
+                reducedFile.name,
+                img
+            )
 
-                val lat = latLng.latitude.toString().toRequestBody("text/plain".toMediaType())
-
-                val lon = latLng.longitude.toString().toRequestBody("text/plain".toMediaType())
-
-                val img = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-
-                val multiPart = MultipartBody.Part.createFormData(
-                    "photo",
-                    reducedFile.name,
-                    img)
-
-                response = apiService.postStory(authToken, multiPart, desc, lat, lon)
+            try {
+                val response: StoryResponse = apiService.postStory(token, multiPart, desc, lat, lon)
 
                 if (response.error) {
-                    throw Exception(response.message)
+                    emit(NetworkResult.Error(response.message))
+                } else {
+                    emit(NetworkResult.Success(!response.error))
                 }
+
+            } catch (e: Exception) {
+                emit(NetworkResult.Error(e.message.toString()))
             }
 
-            return !response.error
         }
-    }
 
-    override fun getAllStories(): Flow<PagingData<Story>> {
+    }.flowOn(Dispatchers.IO)
+
+    override fun getAllStories(token: String): Flow<PagingData<Story>> {
         @OptIn(ExperimentalPagingApi::class)
         return Pager(
             config = PagingConfig(
                 pageSize = 5
             ),
-            remoteMediator = StoryRemoteMediator(storyDatabase, apiService, pref, networkMapper),
+            remoteMediator = StoryRemoteMediator(token, storyDatabase, apiService, networkMapper),
             pagingSourceFactory = {
                 storyDatabase.storyDao.getAllStories()
             }
         ).flow
     }
 
-    override suspend fun getAllStories(withLocation: Boolean): List<Story> {
-        val token = pref.getString(UserAccountRepository.USER_TOKEN_KEY, "")
+    override fun getAllStories(
+        token: String,
+        isLocationOnly: Boolean
+    ): Flow<NetworkResult<List<Story>>> = flow {
 
-        val authToken = "Bearer $token"
+        wrapEspressoIdlingResource {
 
-        val response: StoryResponse
+            emit(NetworkResult.Loading)
 
-        if (token.isNullOrBlank()) {
-            throw Exception(IN_SESSION_TIMEOUT)
-        } else {
-            withContext(Dispatchers.IO) {
+            try {
+                val response: StoryResponse = if (isLocationOnly) apiService.getAllStories(
+                    token,
+                    1
+                ) else apiService.getAllStories(token, 0)
 
-                response = if (withLocation){
-                    apiService.getAllStories(authToken, 1)
+                if (response.error) {
+                    emit(NetworkResult.Error(response.message))
                 } else {
-                    apiService.getAllStories(authToken, 0)
-                }
-            }
 
-            if (response.error) {
-                throw Exception(response.message)
-            } else {
-                return response.data?.map { networkMapper.mapToEntity(it) }.orEmpty()
+                    val listStory: List<Story> =
+                        response.data?.map { networkMapper.mapToEntity(it) }.orEmpty()
+
+                    emit(NetworkResult.Success(listStory))
+                }
+            } catch (e: Exception) {
+                emit(NetworkResult.Error(e.message.toString()))
             }
         }
-    }
-
-    companion object {
-        const val IN_SESSION_TIMEOUT = "Login Session has ended"
     }
 }

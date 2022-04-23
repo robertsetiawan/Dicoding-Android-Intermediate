@@ -9,11 +9,17 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.StoryRepository
+import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.Story
+import com.robertas.storyapp.models.enums.NetworkResult
+import com.robertas.storyapp.repositories.UserAccountRepository
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 
 
-class StackRemoteViewsFactory(private val context: Context, private val storyRepository: StoryRepository): RemoteViewsService.RemoteViewsFactory {
+class StackRemoteViewsFactory(private val context: Context,
+                              private val userAccountRepository: UserRepository,
+                              private val storyRepository: StoryRepository): RemoteViewsService.RemoteViewsFactory {
 
     private val listStory = ArrayList<Story>()
 
@@ -22,12 +28,17 @@ class StackRemoteViewsFactory(private val context: Context, private val storyRep
     override fun onDataSetChanged() {
         runBlocking {
             try {
-                val storyList = storyRepository.getAllStories(false)
+                val storyList = storyRepository.getAllStories(userAccountRepository.getBearerToken(), false)
 
-                storyList.let {
-                    listStory.clear()
+                storyList.collect { result ->
 
-                    listStory.addAll(it)
+                    when(result){
+                        is NetworkResult.Loading -> listStory.clear()
+
+                        is NetworkResult.Success -> listStory.addAll(result.data)
+
+                        is NetworkResult.Error -> {}
+                    }
                 }
 
             } catch (e: Exception){

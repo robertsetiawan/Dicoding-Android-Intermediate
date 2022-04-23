@@ -13,11 +13,12 @@ import com.robertas.storyapp.models.network.StoryNetwork
 
 @OptIn(ExperimentalPagingApi::class)
 class StoryRemoteMediator(
+    private val token: String,
     private val storyDatabase: StoryDatabase,
     private val apiService: IStoryService,
-    private val pref: SharedPreferences,
     private val storyNetworkMapper: IDomainMapper<StoryNetwork, Story>
 ) : RemoteMediator<Int, Story>() {
+
     override suspend fun initialize(): InitializeAction {
         return InitializeAction.LAUNCH_INITIAL_REFRESH
     }
@@ -51,45 +52,35 @@ class StoryRemoteMediator(
 
         try {
 
-            val token = pref.getString(USER_TOKEN_KEY, "")
+            val response = apiService.getAllStories(token, 0, page, state.config.pageSize)
 
-            val authToken = "Bearer $token"
+            val listStory =
+                response.data?.map { storyNetworkMapper.mapToEntity(it) }.orEmpty()
 
-            if (token.isNullOrBlank()) {
+            val endOfPaginationReached = listStory.isEmpty()
 
-                throw Exception(IN_SESSION_TIMEOUT)
+            storyDatabase.withTransaction {
 
-            } else {
-                val response = apiService.getAllStories(authToken, 0, page, state.config.pageSize)
+                if (loadType == LoadType.REFRESH) {
+                    storyDatabase.remoteKeysDao.deleteAll()
 
-                val listStory =
-                    response.data?.map { storyNetworkMapper.mapToEntity(it) }.orEmpty()
-
-                val endOfPaginationReached = listStory.isEmpty()
-
-                storyDatabase.withTransaction {
-
-                    if (loadType == LoadType.REFRESH) {
-                        storyDatabase.remoteKeysDao.deleteAll()
-
-                        storyDatabase.storyDao.deleteAll()
-                    }
-
-                    val prevKey = if (page == 1) null else page - 1
-
-                    val nextKey = if (endOfPaginationReached) null else page + 1
-
-                    val keys = listStory.map {
-                        RemoteKeys(id = it.id, prevKey = prevKey, nextKey = nextKey)
-                    }
-
-                    storyDatabase.remoteKeysDao.insertAll(keys)
-
-                    storyDatabase.storyDao.insertAll(listStory)
+                    storyDatabase.storyDao.deleteAll()
                 }
 
-                return MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
+                val prevKey = if (page == 1) null else page - 1
+
+                val nextKey = if (endOfPaginationReached) null else page + 1
+
+                val keys = listStory.map {
+                    RemoteKeys(id = it.id, prevKey = prevKey, nextKey = nextKey)
+                }
+
+                storyDatabase.remoteKeysDao.insertAll(keys)
+
+                storyDatabase.storyDao.insertAll(listStory)
             }
+
+            return MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
 
         } catch (exception: Exception) {
             return MediatorResult.Error(exception)
@@ -118,9 +109,5 @@ class StoryRemoteMediator(
 
     companion object {
         private const val INITIAL_PAGE_KEY = 1
-
-        private const val IN_SESSION_TIMEOUT = "Login Session has ended"
-
-        private const val USER_TOKEN_KEY = "user_token_key"
     }
 }

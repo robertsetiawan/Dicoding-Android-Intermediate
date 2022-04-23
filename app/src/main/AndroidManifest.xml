@@ -32,7 +32,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.StoryApp">
+        android:theme="@style/Theme.StoryApp"
+        android:usesCleartextTraffic="true">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDXj8obVWWd7swrMe6TWh3irXNyMo5SnsA" />
@@ -52,6 +53,10 @@
         <service
             android:name=".widget.StackStoryService"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <activity
+            android:name=".views.HiltTestActivity"
+            android:exported="false" />
 
         <activity
             android:name=".views.MainActivity"

@@ -13,7 +13,7 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -36,6 +36,8 @@ import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.viewmodels.MapsViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickListener {
@@ -116,28 +118,30 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
             )
 
         } catch (e: Exception) {
-            Log.e(TAG, e.message.toString())
+            e.printStackTrace()
         }
     }
 
     private fun loadData() {
-        val storyListObserver = Observer<NetworkResult<List<Story>?>> { result ->
-            when (result) {
-                is NetworkResult.Loading -> {}
 
-                is NetworkResult.Success -> {
-                    result.data?.forEachIndexed { index, story -> loadMarker(index, story) }
-                }
-                is NetworkResult.Error -> {
-                    binding?.root?.let {
-                        Snackbar.make(it, result.message, Snackbar.LENGTH_SHORT).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            mapsViewModel.getListStory().collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> {}
+
+                    is NetworkResult.Success -> {
+                        result.data.forEachIndexed { index, story -> loadMarker(index, story) }
+                    }
+                    is NetworkResult.Error -> {
+                        binding?.root?.let {
+                            Snackbar.make(it, result.message, Snackbar.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
-
         }
 
-        mapsViewModel.loadStoryState.observe(viewLifecycleOwner, storyListObserver)
     }
 
     private fun loadMarker(index: Int, story: Story) {
@@ -150,7 +154,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
                         resource: Bitmap,
                         transition: Transition<in Bitmap>?
                     ) {
-                        val resizedBitmap = resizeBitmap(resource, 75, 75)
+                        val resizedBitmap = resizeBitmap(resource)
 
                         mMap.addMarker(
                             MarkerOptions()
@@ -203,9 +207,9 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
         }
     }
 
-    private fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
+    private fun resizeBitmap(bitmap: Bitmap): Bitmap {
 
-        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false)
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 75, 75, false)
 
         val roundedBitmapDrawable = RoundedBitmapDrawableFactory.create(resources, scaledBitmap)
 
@@ -216,9 +220,5 @@ class MapsFragment : Fragment(), OnMapReadyCallback, Toolbar.OnMenuItemClickList
         }
 
         return roundedBitmapDrawable.toBitmap()
-    }
-
-    companion object {
-        private const val TAG = "MapsFragment"
     }
 }

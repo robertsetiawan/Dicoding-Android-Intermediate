@@ -7,10 +7,13 @@ import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.User
 import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.LanguageMode
+import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.models.network.UserNetwork
 import com.robertas.storyapp.models.network.UserResponse
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 class UserAccountRepository @Inject constructor(
@@ -18,36 +21,49 @@ class UserAccountRepository @Inject constructor(
     override val pref: SharedPreferences,
     override val networkMapper: IDomainMapper<UserNetwork, User>
 ) : UserRepository() {
-    override suspend fun login(email: String, password: String): User? {
-        val response: UserResponse
+    override suspend fun login(email: String, password: String): Flow<NetworkResult<User?>> = flow {
 
-        withContext(Dispatchers.IO) {
-            response = apiService.postLogin(email = email, password = password)
+        emit(NetworkResult.Loading)
+
+        try {
+            val response: UserResponse = apiService.postLogin(email, password)
+
+            val user = response.data?.let { networkMapper.mapToEntity(it) }
+
+            if (user == null || response.error){
+                emit(NetworkResult.Error(response.message))
+            } else {
+                emit(NetworkResult.Success(user))
+            }
+
+
+        } catch (e: Exception) {
+            emit(NetworkResult.Error(e.message.toString()))
         }
 
-        if (response.error) {
+    }.flowOn(Dispatchers.IO)
 
-            throw Exception(response.message)
+    override suspend fun register(
+        name: String,
+        email: String,
+        password: String
+    ): Flow<NetworkResult<Boolean>> = flow {
 
-        } else {
+        emit(NetworkResult.Loading)
 
-            return response.data?.let { networkMapper.mapToEntity(it) }
+        try {
+            val response: UserResponse = apiService.register(name, email, password)
+
+            if (response.error) {
+                emit(NetworkResult.Error(response.message))
+            } else {
+                emit(NetworkResult.Success(!response.error))
+            }
+        } catch (e: Exception) {
+            emit(NetworkResult.Error(e.message.toString()))
         }
-    }
 
-    override suspend fun register(name: String, email: String, password: String): Boolean {
-        val response: UserResponse
-
-        withContext(Dispatchers.IO) {
-            response = apiService.register(email = email, password = password, name = name)
-        }
-
-        if (response.error){
-            throw Exception(response.message)
-        } else {
-            return response.error
-        }
-    }
+    }.flowOn(Dispatchers.IO)
 
     override fun isUserLoggedIn(): Boolean {
         val token = pref.getString(USER_TOKEN_KEY, null)
@@ -117,6 +133,14 @@ class UserAccountRepository @Inject constructor(
                 else -> LanguageMode.DEFAULT
             }
         ).apply()
+    }
+
+    override fun getUserToken(): String? {
+        return pref.getString(USER_TOKEN_KEY, null)
+    }
+
+    override fun getBearerToken(): String {
+        return "Bearer ${getUserToken()}"
     }
 
     companion object {

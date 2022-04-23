@@ -8,7 +8,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Environment
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.robertas.storyapp.R
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.*
@@ -31,6 +34,8 @@ fun parseTime(unformattedTime: String): Date?{
 
     return formatter.parse(unformattedTime)
 }
+
+fun ViewModel.getViewModelScope(coroutineScope: CoroutineScope?) = coroutineScope?: this.viewModelScope
 
 
 fun formatTime(unformattedTime: Long, format: String): String {

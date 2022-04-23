@@ -1,14 +1,17 @@
 package com.robertas.storyapp.viewmodels
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.robertas.storyapp.CoroutinesTestRule
 import com.robertas.storyapp.DataDummy
 import com.robertas.storyapp.MainCoroutineRule
 import com.robertas.storyapp.abstractions.StoryRepository
-import com.robertas.storyapp.getOrAwaitValue
+import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.enums.NetworkResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Assert.*
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -16,9 +19,7 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.times
 import org.mockito.junit.MockitoJUnitRunner
-import java.lang.RuntimeException
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
@@ -27,51 +28,38 @@ class MapsViewModelTest {
     var instantExecutorRule = InstantTaskExecutorRule()
 
     @get:Rule
-    var mainCoroutineRule = MainCoroutineRule()
+    var coroutinesTestRule = CoroutinesTestRule()
 
     @Mock
     private lateinit var userStoryRepository: StoryRepository
+
+    @Mock
+    private lateinit var userAccountRepository: UserRepository
 
     private lateinit var mapsViewModel: MapsViewModel
 
     private val dummyStories = DataDummy.generateDummyStories(true)
 
+    private val dummyToken = DataDummy.generateDummyToken()
+
     @Before
     fun setUp(){
-        mapsViewModel = MapsViewModel(userStoryRepository)
+        mapsViewModel = MapsViewModel(userAccountRepository, userStoryRepository)
     }
 
     @Test
-    fun `when view model init then getAllStories`() = mainCoroutineRule.runBlockingTest{
+    fun `get all stories should return success with story`() = runTest{
 
-        Mockito.verify(userStoryRepository, times(1)).getAllStories(true)
-    }
+        val expectedPagingData = flowOf(NetworkResult.Success(dummyStories))
 
-    @Test
-    fun `get all stories should return success with story`() = mainCoroutineRule.runBlockingTest{
-        `when`(userStoryRepository.getAllStories(true)).thenReturn(dummyStories)
+        `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
 
-        mapsViewModel.getAllStories()
+        `when`(userStoryRepository.getAllStories(dummyToken, true)).thenReturn(expectedPagingData)
 
-        val actualLoadStoryState = mapsViewModel.loadStoryState.getOrAwaitValue()
+        assertEquals(expectedPagingData, mapsViewModel.getListStory())
 
-        assertEquals(NetworkResult.Success(dummyStories), actualLoadStoryState)
+        Mockito.verify(userStoryRepository).getAllStories(dummyToken, true)
 
-        assertNotEquals(NetworkResult.Success(null), actualLoadStoryState)
-
-        Mockito.verify(userStoryRepository, times(2)).getAllStories(true)
-    }
-
-    @Test
-    fun `when error loading story then result error`() = mainCoroutineRule.runBlockingTest {
-        `when`(userStoryRepository.getAllStories(true)).thenThrow(RuntimeException("Missing Authentication"))
-
-        mapsViewModel.getAllStories()
-
-        val actualLoadStoryState = mapsViewModel.loadStoryState.getOrAwaitValue()
-
-        assertEquals(NetworkResult.Error("Missing Authentication"), actualLoadStoryState)
-
-        Mockito.verify(userStoryRepository, times(2)).getAllStories(true)
+        Mockito.verify(userAccountRepository).getBearerToken()
     }
 }

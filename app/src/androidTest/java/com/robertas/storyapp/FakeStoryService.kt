@@ -8,7 +8,7 @@ import okhttp3.RequestBody
 
 class FakeStoryService: IStoryService {
     override suspend fun postLogin(email: String, password: String): UserResponse {
-        return DataDummy.generateUserResponseDummy(false)
+        return DataDummy.generateUserResponseDummy(true)
     }
 
     override suspend fun register(name: String, email: String, password: String): UserResponse {
