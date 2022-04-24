@@ -1,10 +1,12 @@
 package com.robertas.storyapp.views
 
 import android.Manifest
+import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_GET_CONTENT
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.location.Location
@@ -12,10 +14,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -28,8 +32,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -37,15 +44,16 @@ import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentPreviewBinding
 import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.NetworkResult
+import com.robertas.storyapp.utils.EspressoIdlingResource
 import com.robertas.storyapp.utils.createTempFile
 import com.robertas.storyapp.utils.rotateBitmap
 import com.robertas.storyapp.utils.uriToFile
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class PreviewFragment : Fragment(), View.OnClickListener {
@@ -69,6 +77,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
     private var rotationDegree = 0f
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    private lateinit var locationRequest: LocationRequest
 
     private var lastLocation: Location? = null
 
@@ -103,7 +113,7 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
         binding?.rotateBtn?.setOnClickListener(this)
 
-        getLastLocation()
+        createLocationRequest()
     }
 
     private fun requestCameraPermission() {
@@ -111,6 +121,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
 
             startCamera()
         } else {
+
+            EspressoIdlingResource.increment()
 
             requestPermission.launch(REQUIRED_CAMERA_PERMISSION)
         }
@@ -126,6 +138,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { permission ->
             if (permission == true) {
                 startCamera()
+
+                EspressoIdlingResource.decrement()
             } else {
                 binding?.root?.let {
                     Snackbar.make(
@@ -134,6 +148,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                         Snackbar.LENGTH_SHORT
                     ).show()
                 }
+
+                EspressoIdlingResource.decrement()
             }
         }
 
@@ -150,6 +166,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                 else -> {}
             }
 
+            EspressoIdlingResource.decrement()
+
         }
 
     private fun getLastLocation() {
@@ -162,6 +180,9 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+
+            EspressoIdlingResource.increment()
+
             requestMultiplePermission.launch(REQUIRED_LOCATION_PERMISSIONS)
 
         } else {
@@ -172,10 +193,52 @@ class PreviewFragment : Fragment(), View.OnClickListener {
                 if (location == null) {
                     lastLocation = null
 
-                    showSnackBar("Last location is null")
+                    showSnackBar(getString(R.string.last_location_is_null))
                 }
             }
         }
+    }
+
+    private val resolutionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.StartIntentSenderForResult()
+        ) { result ->
+            when (result.resultCode) {
+                RESULT_OK ->
+                    Log.i(TAG, "onActivityResult: All location settings are satisfied.")
+                Activity.RESULT_CANCELED-> showSnackBar(getString(R.string.please_turn_on_gps))
+            }
+        }
+
+    private fun createLocationRequest() {
+
+        locationRequest = LocationRequest.create().apply {
+            interval = TimeUnit.SECONDS.toMillis(1)
+            maxWaitTime = TimeUnit.SECONDS.toMillis(1)
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
+        val builder = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+
+        val client = LocationServices.getSettingsClient(requireActivity())
+
+        client.checkLocationSettings(builder.build())
+            .addOnSuccessListener {
+
+                getLastLocation()
+            }
+            .addOnFailureListener { exception ->
+                if (exception is ResolvableApiException) {
+                    try {
+                        resolutionLauncher.launch(
+                            IntentSenderRequest.Builder(exception.resolution).build()
+                        )
+                    } catch (sendEx: IntentSender.SendIntentException) {
+
+                        sendEx.message?.let { showSnackBar(it) }
+                    }
+                }
+            }
     }
 
     private fun startCamera() {
@@ -440,6 +503,8 @@ class PreviewFragment : Fragment(), View.OnClickListener {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         )
+
+        const val TAG = "PreviewFragment"
     }
 
 }

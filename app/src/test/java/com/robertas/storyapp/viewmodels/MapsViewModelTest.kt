@@ -3,13 +3,11 @@ package com.robertas.storyapp.viewmodels
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.robertas.storyapp.CoroutinesTestRule
 import com.robertas.storyapp.DataDummy
-import com.robertas.storyapp.MainCoroutineRule
 import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.enums.NetworkResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -50,13 +48,29 @@ class MapsViewModelTest {
     @Test
     fun `get all stories should return success with story`() = runTest{
 
-        val expectedPagingData = flowOf(NetworkResult.Success(dummyStories))
+        val expectedResult = flowOf(NetworkResult.Success(dummyStories))
 
         `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
 
-        `when`(userStoryRepository.getAllStories(dummyToken, true)).thenReturn(expectedPagingData)
+        `when`(userStoryRepository.getAllStories(dummyToken, true)).thenReturn(expectedResult)
 
-        assertEquals(expectedPagingData, mapsViewModel.getListStory())
+        assertEquals(expectedResult, mapsViewModel.getListStory())
+
+        Mockito.verify(userStoryRepository).getAllStories(dummyToken, true)
+
+        Mockito.verify(userAccountRepository).getBearerToken()
+    }
+
+    @Test
+    fun `failed get all stories should return error`() = runTest{
+
+        val expectedResult = flowOf(NetworkResult.Error("error"))
+
+        `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
+
+        `when`(userStoryRepository.getAllStories(dummyToken, true)).thenReturn(expectedResult)
+
+        assertEquals(expectedResult, mapsViewModel.getListStory())
 
         Mockito.verify(userStoryRepository).getAllStories(dummyToken, true)
 

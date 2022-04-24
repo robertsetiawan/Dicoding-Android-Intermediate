@@ -41,8 +41,6 @@ class UserViewModelTest {
     @Test
     fun `when success login then return true`() = runTest {
 
-//        `when`(userAccountRepository.isUserLoggedIn()).thenReturn(true)
-
         `when`(userAccountRepository.login(dummyUser.name, "123456")).thenReturn(flowOf(NetworkResult.Success(dummyUser)))
 
         userViewModel.login(dummyUser.name, "123456").collect { result ->
@@ -64,8 +62,6 @@ class UserViewModelTest {
     @Test
     fun `when error login then return false`(): Unit = runTest {
 
-//        `when`(userAccountRepository.isUserLoggedIn()).thenReturn(false)
-
         val expectedResult = flowOf(NetworkResult.Error("password salah"))
 
         `when`(userAccountRepository.login(dummyUser.name, "123456")).thenReturn(expectedResult)
@@ -73,6 +69,7 @@ class UserViewModelTest {
         userViewModel.login(dummyUser.name, "123456").collect { result ->
 
             assertFalse(result is NetworkResult.Success)
+
             assertTrue(result is NetworkResult.Error)
 
             assertEquals("password salah", (result as NetworkResult.Error).message)

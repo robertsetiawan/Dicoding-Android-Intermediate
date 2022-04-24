@@ -9,7 +9,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
@@ -17,11 +16,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import androidx.paging.LoadState
-import androidx.paging.PagingData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.IOnItemClickListener
@@ -100,6 +97,12 @@ class HomeFragment : Fragment(), View.OnClickListener,
         }
     }
 
+    private fun showSnackBar(message: String){
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
     private fun setupSwipeRefreshLayout() {
 
         swipeRefreshLayout = binding?.swipeRefresh
@@ -158,9 +161,7 @@ class HomeFragment : Fragment(), View.OnClickListener,
 
                     errorState?.let { state ->
 
-                        binding?.root?.let {
-                            Snackbar.make(it, state.error.toString(), Snackbar.LENGTH_SHORT).show()
-                        }
+                        showSnackBar(state.error.toString())
                     }
                 }
         }
@@ -207,6 +208,8 @@ class HomeFragment : Fragment(), View.OnClickListener,
         _binding = null
 
         swipeRefreshLayout = null
+
+        storyList = null
     }
 
     override fun onClick(view: View) {

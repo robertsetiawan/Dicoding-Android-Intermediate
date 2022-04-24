@@ -34,6 +34,7 @@ class UserAccountRepository @Inject constructor(
                 emit(NetworkResult.Error(response.message))
             } else {
                 emit(NetworkResult.Success(user))
+                setLoggedInUser(user)
             }
 
 

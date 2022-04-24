@@ -1,15 +1,8 @@
 package com.robertas.storyapp.viewmodels
 
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.robertas.storyapp.abstractions.INavigation
 import com.robertas.storyapp.abstractions.UserRepository
-import com.robertas.storyapp.models.domain.User
-import com.robertas.storyapp.models.enums.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel

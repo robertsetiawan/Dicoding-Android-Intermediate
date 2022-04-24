@@ -13,6 +13,7 @@ import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.adapters.StoryListAdapter
 import com.robertas.storyapp.getOrAwaitValue
+import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.NetworkResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -87,6 +88,34 @@ class StoryViewModelTest {
         assertEquals(dummyData.size, differ.snapshot().size)
 
         assertEquals(dummyData[0].id, differ.snapshot()[0]?.id)
+    }
+
+    @Test
+    fun `when Get Paginated Story return empty`() = runBlocking {
+        val dummyData = listOf<Story>()
+
+        val data = PagingData.from(dummyData)
+
+        `when`(userAccountRepository.getBearerToken()).thenReturn(dummyToken)
+
+        `when`(userStoryRepository.getAllStories(dummyToken)).thenReturn(flowOf(data))
+
+        val differ = AsyncPagingDataDiffer(
+            diffCallback = StoryListAdapter.DIFF_CALLBACK,
+            updateCallback = noopListUpdateCallback,
+            mainDispatcher = coroutinesTestRule.testDispatcher,
+            workerDispatcher = coroutinesTestRule.testDispatcher,
+        )
+
+        val pagingData = storyViewModel.getPaginatedData().getOrAwaitValue()
+
+        differ.submitData(pagingData)
+
+        Mockito.verify(userStoryRepository).getAllStories(dummyToken)
+
+        assertNotNull(differ.snapshot())
+
+        assertEquals(dummyData.size, differ.snapshot().size)
     }
 
     @Test

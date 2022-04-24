@@ -60,7 +60,7 @@ object DataDummy {
         )
     }
 
-    fun generateStoryResponseDummy(): StoryResponse {
+    fun generateStoryResponseDummy(isError: Boolean): StoryResponse {
         val listStory = generateDummyStories(false)
 
         val listStoryNetwork = listStory.map {
@@ -75,7 +75,11 @@ object DataDummy {
             )
         }.toList()
 
-        return StoryResponse("ok", false, listStoryNetwork)
+        return if(!isError) {
+            StoryResponse("ok", false, listStoryNetwork)
+        } else {
+            StoryResponse("error", true, null)
+        }
     }
 
     fun generateBaseResponseDummy(): UserResponse {

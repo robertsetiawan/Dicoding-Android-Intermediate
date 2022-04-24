@@ -31,14 +31,12 @@ class MainActivityTest {
     @get:Rule
     val activity = ActivityScenarioRule(MainActivity::class.java)
 
-
     @Before
     fun setUp() {
 
         IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
 
         Intents.init()
-
     }
 
     @After
@@ -46,7 +44,6 @@ class MainActivityTest {
         IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
 
         Intents.release()
-
     }
 
     @Test

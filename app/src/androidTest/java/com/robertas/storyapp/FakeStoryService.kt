@@ -6,9 +6,9 @@ import com.robertas.storyapp.models.network.UserResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 
-class FakeStoryService: IStoryService {
+class FakeStoryService(private val isErrorScenario: Boolean): IStoryService {
     override suspend fun postLogin(email: String, password: String): UserResponse {
-        return DataDummy.generateUserResponseDummy(true)
+        return DataDummy.generateUserResponseDummy(isErrorScenario)
     }
 
     override suspend fun register(name: String, email: String, password: String): UserResponse {
@@ -20,7 +20,7 @@ class FakeStoryService: IStoryService {
         file: MultipartBody.Part,
         description: RequestBody
     ): StoryResponse {
-        return DataDummy.generateStoryResponseDummy()
+        return DataDummy.generateStoryResponseDummy(isErrorScenario)
     }
 
     override suspend fun postStory(
@@ -30,11 +30,11 @@ class FakeStoryService: IStoryService {
         lat: RequestBody,
         lon: RequestBody
     ): StoryResponse {
-        return DataDummy.generateStoryResponseDummy()
+        return DataDummy.generateStoryResponseDummy(isErrorScenario)
     }
 
     override suspend fun getAllStories(token: String, withLocation: Int): StoryResponse {
-        return DataDummy.generateStoryResponseDummy()
+        return DataDummy.generateStoryResponseDummy(isErrorScenario)
     }
 
     override suspend fun getAllStories(
@@ -43,6 +43,6 @@ class FakeStoryService: IStoryService {
         page: Int,
         size: Int
     ): StoryResponse {
-        return DataDummy.generateStoryResponseDummy()
+        return DataDummy.generateStoryResponseDummy(isErrorScenario)
     }
 }

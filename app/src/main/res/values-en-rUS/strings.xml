@@ -43,4 +43,6 @@
     <string name="satellite_type">Satellite view</string>
     <string name="terrain_type">Terrain view</string>
     <string name="retry">Retry</string>
+    <string name="please_turn_on_gps">Anda harus mengaktifkan GPS!</string>
+    <string name="last_location_is_null">Last location is null</string>
 </resources>

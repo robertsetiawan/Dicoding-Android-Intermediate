@@ -20,6 +20,7 @@ import com.robertas.storyapp.utils.StoryNetworkMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -45,7 +46,7 @@ class UserStoryRepositoryTest {
 
         networkMapper = StoryNetworkMapper()
 
-        apiService = FakeStoryService()
+        apiService = FakeStoryService(false)
 
         storyDatabase = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
@@ -64,16 +65,27 @@ class UserStoryRepositoryTest {
     }
 
     @Test
-    fun getAllStories() = runBlocking {
+    fun getAllStories() = runTest {
 
         val list = userStoryRepository.getAllStories("",false).toList()
 
         assertEquals(list, listOf(NetworkResult.Loading, NetworkResult.Success(DataDummy.generateDummyStories(false))))
     }
 
+    @Test fun errorGetAllStories() = runTest {
+
+        apiService = FakeStoryService(true)
+
+        userStoryRepository = UserStoryRepository(apiService, networkMapper, storyDatabase)
+
+        val list = userStoryRepository.getAllStories("",false).toList()
+
+        assertEquals(list, listOf(NetworkResult.Loading, NetworkResult.Error("error")))
+    }
+
 
     @Test
-    fun postLocationStory() = runBlocking {
+    fun postLocationStory() = runTest {
         val file = File("src/test/resources/Cover.png")
 
         val list = userStoryRepository.postStory("", file, "gambar", 0f, LatLng(0.0, 0.0)).toList()
@@ -82,7 +94,21 @@ class UserStoryRepositoryTest {
     }
 
     @Test
-    fun postStory() = runBlocking {
+    fun errorPostLocationStory() = runTest {
+
+        apiService = FakeStoryService(true)
+
+        userStoryRepository = UserStoryRepository(apiService, networkMapper, storyDatabase)
+
+        val file = File("src/test/resources/Cover.png")
+
+        val list = userStoryRepository.postStory("", file, "gambar", 0f, LatLng(0.0, 0.0)).toList()
+
+        assertEquals(list, listOf(NetworkResult.Loading, NetworkResult.Error("error")))
+    }
+
+    @Test
+    fun postStory() = runTest {
         val file = File("src/test/resources/Cover.png")
 
         val list = userStoryRepository.postStory("", file, "gambar", 0f).toList()
@@ -91,7 +117,21 @@ class UserStoryRepositoryTest {
     }
 
     @Test
-    fun whenRefreshPaginatedDataIsSuccess() = runBlocking {
+    fun errorPostStory() = runTest {
+
+        apiService = FakeStoryService(true)
+
+        userStoryRepository = UserStoryRepository(apiService, networkMapper, storyDatabase)
+
+        val file = File("src/test/resources/Cover.png")
+
+        val list = userStoryRepository.postStory("", file, "gambar", 0f).toList()
+
+        assertEquals(list, listOf(NetworkResult.Loading, NetworkResult.Error("error")))
+    }
+
+    @Test
+    fun whenRefreshPaginatedDataIsSuccess() = runTest {
 
         val user = DataDummy.generateUserDummy()
 
@@ -101,6 +141,35 @@ class UserStoryRepositoryTest {
             data = DataDummy.generateDummyStories(false),
             prevKey = null,
             nextKey = 2
+        )
+
+        val actualResult = storyPagingSource.load(
+            PagingSource.LoadParams.Refresh(
+                key = 1,
+                loadSize = 1,
+                placeholdersEnabled = false
+            )
+        )
+
+        assertEquals(
+            expectedResult,
+            actualResult
+        )
+    }
+
+    @Test
+    fun whenErrorRefreshPaginatedDataIsSuccess() = runTest {
+
+        val user = DataDummy.generateUserDummy()
+
+        apiService = FakeStoryService(true)
+
+        val storyPagingSource = StoryPagingSource(apiService, networkMapper, user.token)
+
+        val expectedResult = PagingSource.LoadResult.Page(
+            data = listOf(),
+            prevKey = null,
+            nextKey = null
         )
 
         val actualResult = storyPagingSource.load(
