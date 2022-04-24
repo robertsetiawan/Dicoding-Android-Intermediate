@@ -7,63 +7,64 @@ import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.User
 import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.LanguageMode
+import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.models.network.UserNetwork
 import com.robertas.storyapp.models.network.UserResponse
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import retrofit2.Response
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 class UserAccountRepository @Inject constructor(
     override val apiService: IStoryService,
     override val pref: SharedPreferences,
-    override val domainMapper: IDomainMapper<UserNetwork, User>
+    override val networkMapper: IDomainMapper<UserNetwork, User>
 ) : UserRepository() {
-    override suspend fun login(email: String, password: String): User? {
-        val response: Response<UserResponse>
+    override suspend fun login(email: String, password: String): Flow<NetworkResult<User>> = flow {
 
-        withContext(Dispatchers.IO) {
-            response = apiService.postLogin(email = email, password = password)
-        }
+        emit(NetworkResult.Loading)
 
-        when (response.code()) {
-            200 -> {
-                val apiResponse = response.body()
+        try {
+            val response: UserResponse = apiService.postLogin(email, password)
 
-                if (apiResponse?.error == true) {
+            val user = response.data?.let { networkMapper.mapToEntity(it) }
 
-                    throw Exception(apiResponse.message)
-
-                } else {
-
-                    return apiResponse?.data?.let { domainMapper.mapToEntity(it) }
-                }
+            if (user == null || response.error){
+                emit(NetworkResult.Error(response.message))
+            } else {
+                emit(NetworkResult.Success(user))
+                setLoggedInUser(user)
             }
 
-            else -> throw Exception(getMessageFromApi(response))
-        }
-    }
 
-    override suspend fun register(name: String, email: String, password: String): Boolean {
-        val response: Response<UserResponse>
-
-        withContext(Dispatchers.IO) {
-            response = apiService.register(email = email, password = password, name = name)
+        } catch (e: Exception) {
+            emit(NetworkResult.Error(e.message.toString()))
         }
 
-        when (response.code()) {
-            201 -> {
-                return if (response.body()?.error == false) {
-                    true
-                } else {
-                    throw Exception(response.body()?.message)
-                }
+    }.flowOn(Dispatchers.IO)
+
+    override suspend fun register(
+        name: String,
+        email: String,
+        password: String
+    ): Flow<NetworkResult<Boolean>> = flow {
+
+        emit(NetworkResult.Loading)
+
+        try {
+            val response: UserResponse = apiService.register(name, email, password)
+
+            if (response.error) {
+                emit(NetworkResult.Error(response.message))
+            } else {
+                emit(NetworkResult.Success(!response.error))
             }
-
-            else -> throw Exception(getMessageFromApi(response))
+        } catch (e: Exception) {
+            emit(NetworkResult.Error(e.message.toString()))
         }
-    }
+
+    }.flowOn(Dispatchers.IO)
 
     override fun isUserLoggedIn(): Boolean {
         val token = pref.getString(USER_TOKEN_KEY, null)
@@ -88,12 +89,6 @@ class UserAccountRepository @Inject constructor(
 
     override fun logOut() {
         pref.edit().clear().apply()
-    }
-
-    private fun getMessageFromApi(response: Response<*>): String {
-        val jsonObj = JSONObject(response.errorBody()?.charStream()?.readText().orEmpty())
-
-        return jsonObj.getString("message").orEmpty()
     }
 
     override fun getCameraMode(): String {
@@ -139,6 +134,14 @@ class UserAccountRepository @Inject constructor(
                 else -> LanguageMode.DEFAULT
             }
         ).apply()
+    }
+
+    override fun getUserToken(): String? {
+        return pref.getString(USER_TOKEN_KEY, null)
+    }
+
+    override fun getBearerToken(): String {
+        return "Bearer ${getUserToken()}"
     }
 
     companion object {

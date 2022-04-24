@@ -43,6 +43,9 @@
         <action
             android:id="@+id/action_homeFragment_to_storyDetailFragment"
             app:destination="@id/storyDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_mapsFragment"
+            app:destination="@id/mapsFragment" />
     </fragment>
     <fragment
         android:id="@+id/cameraFragment"
@@ -89,4 +92,9 @@
             android:name="story"
             app:argType="com.robertas.storyapp.models.domain.Story" />
     </fragment>
+    <fragment
+        android:id="@+id/mapsFragment"
+        android:name="com.robertas.storyapp.views.MapsFragment"
+        android:label="@string/explore"
+        tools:layout="@layout/fragment_maps" />
 </navigation>

@@ -37,4 +37,12 @@
     <string name="no_data">No data</string>
     <string name="restart_to_change_language">Restart application to change language</string>
     <string name="appwidget_text">Story Banner</string>
+    <string name="explore">Explore</string>
+    <string name="normal_type">Normal view</string>
+    <string name="hybrid_type">Hybrid view</string>
+    <string name="satellite_type">Satellite view</string>
+    <string name="terrain_type">Terrain view</string>
+    <string name="retry">Retry</string>
+    <string name="please_turn_on_gps">Turn GPS ON!</string>
+    <string name="last_location_is_null">Last location is null</string>
 </resources>

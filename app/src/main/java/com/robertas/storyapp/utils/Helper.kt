@@ -8,7 +8,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Environment
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.robertas.storyapp.R
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.*
@@ -82,32 +85,33 @@ fun reduceThenRotateFileImage(file: File, degree: Float): File {
 
     var streamLength: Int
 
-    do {
-        val bmpStream = ByteArrayOutputStream()
+    bitmap?.let {
+        do {
+            val bmpStream = ByteArrayOutputStream()
 
-        bitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, bmpStream)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, bmpStream)
 
-        val bmpPicByteArray = bmpStream.toByteArray()
+            val bmpPicByteArray = bmpStream.toByteArray()
 
-        streamLength = bmpPicByteArray.size
+            streamLength = bmpPicByteArray.size
 
-        compressQuality -= 5
+            compressQuality -= 5
 
-    } while (streamLength > 1000000)
+        } while (streamLength > 1000000)
 
-    matrix.postRotate(degree % 360)
+        matrix.postRotate(degree % 360)
 
-    val newBitmap = Bitmap.createBitmap(
-        bitmap,
-        0,
-        0,
-        bitmap.width,
-        bitmap.height,
-        matrix,
-        true
-    )
-
-    newBitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, FileOutputStream(file))
+        val newBitmap = Bitmap.createBitmap(
+            bitmap,
+            0,
+            0,
+            bitmap.width,
+            bitmap.height,
+            matrix,
+            true
+        )
+        newBitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, FileOutputStream(file))
+    }
 
     return file
 }

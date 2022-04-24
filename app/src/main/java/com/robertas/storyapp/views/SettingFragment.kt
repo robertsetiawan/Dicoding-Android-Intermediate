@@ -8,7 +8,6 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -19,7 +18,7 @@ import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentSettingBinding
 import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.LanguageMode
-import com.robertas.storyapp.viewmodels.LoginViewModel
+import com.robertas.storyapp.viewmodels.UserViewModel
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -32,9 +31,9 @@ class SettingFragment : Fragment(), View.OnClickListener {
 
     private lateinit var navController: NavController
 
-    private val storyViewModel by activityViewModels<StoryViewModel>()
+    private val storyViewModel by viewModels<StoryViewModel>()
 
-    private val loginViewModel by viewModels<LoginViewModel>()
+    private val loginViewModel by viewModels<UserViewModel>()
 
     private var cameraDropdown: AutoCompleteTextView? = null
 

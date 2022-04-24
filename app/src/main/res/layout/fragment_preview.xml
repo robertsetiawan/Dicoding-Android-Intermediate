@@ -78,7 +78,7 @@
         app:layout_constraintTop_toBottomOf="@id/camera_btn">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/desc_et"
+            android:id="@+id/desc_portrait_et"
             android:textColor="@color/black"
             android:textCursorDrawable="@null"
             android:layout_width="match_parent"

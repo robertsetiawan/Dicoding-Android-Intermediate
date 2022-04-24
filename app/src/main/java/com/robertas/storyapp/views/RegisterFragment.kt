@@ -8,25 +8,27 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ProgressBar
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentRegisterBinding
 import com.robertas.storyapp.models.enums.NetworkResult
-import com.robertas.storyapp.viewmodels.RegisterViewModel
+import com.robertas.storyapp.viewmodels.UserViewModel
 import com.robertas.storyapp.views.components.CustomEmailEditText
 import com.robertas.storyapp.views.components.CustomNameEditText
 import com.robertas.storyapp.views.components.CustomPasswordEditText
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Job
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment(), View.OnClickListener {
 
-    private val registerViewModel by viewModels<RegisterViewModel>()
+    private val loginViewModel by viewModels<UserViewModel>()
 
     private var _binding: FragmentRegisterBinding? = null
 
@@ -34,15 +36,17 @@ class RegisterFragment : Fragment(), View.OnClickListener {
 
     private lateinit var navController: NavController
 
-    private var registerButton: Button ?= null
+    private var registerButton: Button? = null
 
-    private var loadingProgressBar: ProgressBar ?= null
+    private var loadingProgressBar: ProgressBar? = null
 
-    private var emailEditText: CustomEmailEditText ?= null
+    private var emailEditText: CustomEmailEditText? = null
 
-    private var nameEditText: CustomNameEditText ?= null
+    private var nameEditText: CustomNameEditText? = null
 
-    private var passwordEditText: CustomPasswordEditText ?= null
+    private var passwordEditText: CustomPasswordEditText? = null
+
+    private var registerJob: Job = Job()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -59,54 +63,13 @@ class RegisterFragment : Fragment(), View.OnClickListener {
         navController = findNavController()
 
         bindViewToFragment()
+    }
+
+
+    private fun bindViewToFragment() {
+        registerButton = binding?.registerBtn
 
         registerButton?.setOnClickListener(this)
-
-        setupRegisterObserver()
-    }
-
-    private fun setupRegisterObserver() {
-        val registerObserver = Observer<NetworkResult<Boolean?>>{ result ->
-            when (result) {
-                is NetworkResult.Loading -> {}
-
-                is NetworkResult.Success -> {
-
-                    binding?.apply {
-                        registerBtn.visibility = View.VISIBLE
-
-                        progressLoading.visibility = View.GONE
-                    }
-
-                    binding?.root?.let { it -> Snackbar.make(it, getString(R.string.success_registration), Snackbar.LENGTH_SHORT).show() }
-
-                    val actionToLoginFragment = RegisterFragmentDirections.actionRegisterFragmentToLoginFragment()
-
-                    navController.navigate(actionToLoginFragment)
-
-                    registerViewModel.doneNavigating()
-                }
-
-                is NetworkResult.Error -> {
-                    binding?.apply {
-                        registerBtn.visibility = View.VISIBLE
-
-                        progressLoading.visibility = View.GONE
-                    }
-
-                    binding?.root?.let { it -> Snackbar.make(it, result.message, Snackbar.LENGTH_SHORT).show() }
-
-                    registerViewModel.doneNavigating()
-                }
-            }
-        }
-
-        registerViewModel.registerState.observe(viewLifecycleOwner, registerObserver)
-    }
-
-
-    private fun bindViewToFragment(){
-        registerButton = binding?.registerBtn
 
         loadingProgressBar = binding?.progressLoading
 
@@ -117,7 +80,7 @@ class RegisterFragment : Fragment(), View.OnClickListener {
         passwordEditText = binding?.passwordEt
     }
 
-    private fun isEntryValid(): Boolean{
+    private fun isEntryValid(): Boolean {
         val isEmailValid = emailEditText?.isInputValid ?: false
 
         val isNameValid = nameEditText?.isInputValid ?: false
@@ -143,46 +106,105 @@ class RegisterFragment : Fragment(), View.OnClickListener {
         passwordEditText = null
 
         emailEditText = null
+
+        if (registerJob.isActive) registerJob.cancel()
     }
 
     override fun onClick(view: View) {
-        when(view.id){
+        when (view.id) {
             R.id.register_btn -> {
 
                 hideKeyBoard()
 
-                if (isEntryValid()){
+                if (isEntryValid()) {
 
-                    binding?.apply {
-                        registerBtn.visibility = View.GONE
-
-                        progressLoading.visibility = View.VISIBLE
-                    }
-
-                    registerViewModel.register(nameEditText?.text.toString(), emailEditText?.text.toString(), passwordEditText?.text.toString())
+                    processRegister(
+                        nameEditText?.text.toString(),
+                        emailEditText?.text.toString(),
+                        passwordEditText?.text.toString()
+                    )
 
                 } else {
-                    val isEmailValid = emailEditText?.isInputValid ?: false
-
-                    val isNameValid = nameEditText?.isInputValid ?: false
-
-                    val isPasswordValid = passwordEditText?.isInputValid ?: false
-
-                    if (!isEmailValid){
-                        emailEditText?.showErrorMessage()
-                    }
-
-                    if (!isNameValid) {
-                        nameEditText?.showErrorMessage()
-                    }
-
-                    if (!isPasswordValid){
-                        passwordEditText?.showErrorMessage()
-                    }
+                    showErrorInput()
                 }
             }
 
             else -> return
+        }
+    }
+
+    private fun showErrorInput() {
+        val isEmailValid = emailEditText?.isInputValid ?: false
+
+        val isNameValid = nameEditText?.isInputValid ?: false
+
+        val isPasswordValid = passwordEditText?.isInputValid ?: false
+
+        if (!isEmailValid) {
+            emailEditText?.showErrorMessage()
+        }
+
+        if (!isNameValid) {
+            nameEditText?.showErrorMessage()
+        }
+
+        if (!isPasswordValid) {
+            passwordEditText?.showErrorMessage()
+        }
+    }
+
+    private fun setButtonVisibility(isEnable: Boolean) {
+        binding?.registerBtn?.isVisible = isEnable
+    }
+
+    private fun setLoadingVisibility(isLoading: Boolean) {
+        binding?.progressLoading?.isVisible = isLoading
+    }
+
+    private fun showSnackBar(message: String) {
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun processRegister(name: String, email: String, password: String) {
+
+        lifecycleScope.launchWhenResumed {
+
+            if (registerJob.isActive) registerJob.cancel()
+
+            loginViewModel.register(name, email, password)
+                .collect { result ->
+                    when (result) {
+                        is NetworkResult.Loading -> {
+                            setButtonVisibility(false)
+
+                            setLoadingVisibility(true)
+                        }
+
+                        is NetworkResult.Success -> {
+
+                            setButtonVisibility(true)
+
+                            setLoadingVisibility(false)
+
+                            showSnackBar(getString(R.string.success_registration))
+
+                            val actionToLoginFragment =
+                                RegisterFragmentDirections.actionRegisterFragmentToLoginFragment()
+
+                            navController.navigate(actionToLoginFragment)
+                        }
+
+                        is NetworkResult.Error -> {
+                            setButtonVisibility(true)
+
+                            setLoadingVisibility(false)
+
+                            showSnackBar(result.message)
+                        }
+                    }
+                }
         }
     }
 

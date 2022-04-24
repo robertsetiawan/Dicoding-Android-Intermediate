@@ -1,4 +1,4 @@
-package com.robertas.storyapp
+package com.robertas.storyapp.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import androidx.core.net.toUri
+import com.robertas.storyapp.R
 
 class StackStoryWidget : AppWidgetProvider() {
 

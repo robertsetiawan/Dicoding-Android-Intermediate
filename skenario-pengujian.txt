@@ -1,0 +1,58 @@
+-
+
+Unit Testing
+1. StoryViewModel:
+   - cek skenario response paging data bukan null
+   - cek skenario response paging data adalah list kosong
+   - cek story valid
+   - cek story invalid
+   - cek skenario gagal upload story (tanpa lokasi)
+   - cek skenario berhasil upload story (tanpa lokasi)
+   - cek skenario gagal upload story (dengan lokasi)
+   - cek skenario berhasil upload story (dengan lokasi)
+   - cek jenis kamera yang digunakan
+
+2. MapsViewModel:
+   - cek skenario berhasil load list story
+   - cek skenario gagal load list story
+
+3. UserViewModel:
+   - cek skenario login berhasil
+   - cek skenario login gagal
+   - cek skenario logout
+   - cek bahasa aplikasi yang digunakan
+   - cek skenario registrasi berhasil
+   - cek skenario registrasi gagal
+
+4. UserAccountRepository
+   - cek skenario login berhasil
+   - cek skenario login gagal
+   - cek skenario logout
+   - cek bahasa aplikasi yang digunakan
+   - cek jenis kamera yang digunakan
+   - cek skenario registrasi berhasil
+   - cek skenario registrasi gagal
+   - cek skenario user sudah login
+   - cek skenario log out
+
+5. UserStoryRepository
+   - cek skenario response paging data bukan null
+   - cek skenario response paging data adalah list kosong
+   - cek skenario gagal upload story (tanpa lokasi)
+   - cek skenario berhasil upload story (tanpa lokasi)
+   - cek skenario gagal upload story (dengan lokasi)
+   - cek skenario berhasil upload story (dengan lokasi)
+
+Integration test
+HomeFragmentTest
+    - test launch HomeFragment (halaman list story/daftar cerita) ketika response error
+    - test launch HomeFragment (halaman list story/daftar cerita) ketika response empty
+    - test launch HomeFragment (halaman list story/daftar cerita) ketika response list
+
+
+End to end test
+MainActivityTest
+    Requirement sebelum test: User sudah login, GPS aktif, mengatur kamera menjadi CameraX pada pengaturan
+
+    menampilkan daftar story kemudian upload story menggunakan cameraX
+

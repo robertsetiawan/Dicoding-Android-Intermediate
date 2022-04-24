@@ -15,8 +15,8 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
-import com.robertas.storyapp.StoryApp
 import com.robertas.storyapp.databinding.FragmentCameraBinding
+import com.robertas.storyapp.utils.EspressoIdlingResource
 import com.robertas.storyapp.utils.createFile
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -83,13 +83,16 @@ class CameraFragment : Fragment(), View.OnClickListener {
             } catch (e: Exception) {
 
                 binding?.root?.let {
-                    Snackbar.make(it, getString(R.string.failed_to_start_camera), Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        it,
+                        getString(R.string.failed_to_start_camera),
+                        Snackbar.LENGTH_SHORT
+                    ).show()
                 }
             }
 
         }, ContextCompat.getMainExecutor(requireContext()))
     }
-
 
 
     override fun onDestroyView() {
@@ -105,6 +108,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
             R.id.capture_btn -> takePhoto()
 
             R.id.switch_btn -> {
+
                 cameraSelector =
                     if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) CameraSelector.DEFAULT_FRONT_CAMERA
                     else CameraSelector.DEFAULT_BACK_CAMERA
@@ -116,29 +120,42 @@ class CameraFragment : Fragment(), View.OnClickListener {
     }
 
     private fun takePhoto() {
+
         val imageCapture = imageCapture ?: return
 
-        val photoFile = createFile(activity?.application as StoryApp)
+        EspressoIdlingResource.increment()
 
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+            val photoFile = createFile(requireActivity().application)
 
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    val actionToPreviewFragment =
-                        CameraFragmentDirections.actionCameraFragmentToPreviewFragment(photoFile)
+            val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-                    navController.navigate(actionToPreviewFragment)
-                }
+            imageCapture.takePicture(
+                outputOptions,
+                ContextCompat.getMainExecutor(requireContext()),
+                object : ImageCapture.OnImageSavedCallback {
+                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
 
-                override fun onError(exception: ImageCaptureException) {
-                    binding?.root?.let {
-                        Snackbar.make(it, getString(R.string.failed_to_take_picture), Snackbar.LENGTH_SHORT).show()
+                        val actionToPreviewFragment =
+                            CameraFragmentDirections.actionCameraFragmentToPreviewFragment(photoFile)
+
+                        navController.navigate(actionToPreviewFragment)
+
+                        EspressoIdlingResource.decrement()
+                    }
+
+                    override fun onError(exception: ImageCaptureException) {
+                        binding?.root?.let {
+                            Snackbar.make(
+                                it,
+                                getString(R.string.failed_to_take_picture),
+                                Snackbar.LENGTH_SHORT
+                            ).show()
+                        }
+
+                        EspressoIdlingResource.decrement()
                     }
                 }
-            }
-        )
+            )
+
     }
 }

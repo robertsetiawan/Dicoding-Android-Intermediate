@@ -1,4 +1,4 @@
-package com.robertas.storyapp
+package com.robertas.storyapp.widget
 
 import android.content.Context
 import android.content.Intent
@@ -7,12 +7,17 @@ import android.widget.RemoteViewsService
 import androidx.core.os.bundleOf
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.StoryRepository
+import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.Story
+import com.robertas.storyapp.models.enums.NetworkResult
 import kotlinx.coroutines.runBlocking
 
 
-class StackRemoteViewsFactory(private val context: Context, private val storyRepository: StoryRepository): RemoteViewsService.RemoteViewsFactory {
+class StackRemoteViewsFactory(private val context: Context,
+                              private val userAccountRepository: UserRepository,
+                              private val storyRepository: StoryRepository): RemoteViewsService.RemoteViewsFactory {
 
     private val listStory = ArrayList<Story>()
 
@@ -21,12 +26,17 @@ class StackRemoteViewsFactory(private val context: Context, private val storyRep
     override fun onDataSetChanged() {
         runBlocking {
             try {
-                val storyList = storyRepository.getAllStories()
+                val storyList = storyRepository.getAllStories(userAccountRepository.getBearerToken(), false)
 
-                storyList?.let {
-                    listStory.clear()
+                storyList.collect { result ->
 
-                    listStory.addAll(it)
+                    when(result){
+                        is NetworkResult.Loading -> listStory.clear()
+
+                        is NetworkResult.Success -> listStory.addAll(result.data)
+
+                        is NetworkResult.Error -> {}
+                    }
                 }
 
             } catch (e: Exception){

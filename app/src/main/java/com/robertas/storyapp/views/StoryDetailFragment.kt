@@ -20,9 +20,6 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.robertas.storyapp.R
 import com.robertas.storyapp.databinding.FragmentStoryDetailBinding
-import com.robertas.storyapp.utils.DATETIME_UI_FORMAT
-import com.robertas.storyapp.utils.formatTime
-import com.robertas.storyapp.utils.parseTime
 
 class StoryDetailFragment : Fragment() {
 
@@ -61,23 +58,23 @@ class StoryDetailFragment : Fragment() {
 
         binding?.apply {
 
-            storyImg.transitionName = "picture_${story.id}"
+            storyDetailImg.transitionName = "picture_${story.id}"
 
-            nameTv.transitionName = "name_${story.id}"
+            storyDetailImg.contentDescription = story.description
 
-            fullDescTv.transitionName = "desc_${story.id}"
+            nameDetailTv.transitionName = "name_${story.id}"
 
-            timeTv.transitionName = "time_${story.id}"
+            fullDescDetailTv.transitionName = "desc_${story.id}"
 
-            loadImage(storyImg, story.photoUrl)
+            timeDetailTv.transitionName = "time_${story.id}"
 
-            nameTv.text = story.name
+            loadImage(storyDetailImg, story.photoUrl)
 
-            fullDescTv.text = story.description
+            nameDetailTv.text = story.name
 
-            val parsedDate = parseTime(story.createdAt)
+            fullDescDetailTv.text = story.description
 
-            parsedDate?.time?.let { timeTv.text = formatTime(it, DATETIME_UI_FORMAT) }
+            timeDetailTv.text = story.createdAt
         }
     }
 
@@ -120,7 +117,7 @@ class StoryDetailFragment : Fragment() {
         val appBarConfiguration =
             AppBarConfiguration(setOf(R.id.homeFragment))
 
-        binding?.toolbarFragment?.apply {
+        binding?.storyDetailToolbarFragment?.apply {
             setupWithNavController(navController, appBarConfiguration)
 
             setNavigationOnClickListener { navController.navigateUp() }
@@ -130,5 +127,11 @@ class StoryDetailFragment : Fragment() {
     private fun startEnterTransition(){
         sharedElementEnterTransition = TransitionInflater.from(requireContext())
             .inflateTransition(android.R.transition.move)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        _binding = null
     }
 }

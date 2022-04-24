@@ -1,6 +1,7 @@
-package com.robertas.storyapp.models.network
+package com.robertas.storyapp.abstractions
 
-abstract class ApiResponse<T> {
+abstract class ApiResponse<T>{
+
     abstract val message: String
 
     abstract val error: Boolean

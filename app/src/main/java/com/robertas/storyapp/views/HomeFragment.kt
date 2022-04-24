@@ -6,29 +6,34 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import androidx.paging.LoadState
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.robertas.storyapp.R
 import com.robertas.storyapp.abstractions.IOnItemClickListener
+import com.robertas.storyapp.adapters.LoadingStateAdapter
 import com.robertas.storyapp.adapters.StoryListAdapter
 import com.robertas.storyapp.databinding.FragmentHomeBinding
 import com.robertas.storyapp.databinding.StoryCardBinding
 import com.robertas.storyapp.models.domain.Story
-import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnClickListener,
+class HomeFragment : Fragment(), View.OnClickListener,
     Toolbar.OnMenuItemClickListener {
 
     private var _binding: FragmentHomeBinding? = null
@@ -39,7 +44,11 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
 
     private val storyViewModel by activityViewModels<StoryViewModel>()
 
+    private lateinit var storyListAdapter: StoryListAdapter
+
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
+
+    private var storyList: RecyclerView? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -53,19 +62,57 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        swipeRefreshLayout = binding?.swipeRefresh
-
-        binding?.floatingBtn?.setOnClickListener(this)
+        storyList = binding?.storyList
 
         setupNavigation()
 
-        setupStoryListObserver()
+        setupSwipeRefreshLayout()
+
+        setupRecyclerView()
+
+        loadStories()
+
+        binding?.floatingBtn?.setOnClickListener(this)
     }
 
+    private fun loadStories() {
 
-    private fun setupStoryListObserver() {
+        storyViewModel.isStoriesInvalid.observe(viewLifecycleOwner) { isInvalid ->
+            if (isInvalid) {
 
-        val storyListAdapter = StoryListAdapter()
+                storyListAdapter.refresh()
+
+                storyViewModel.validateStories()
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            storyViewModel.getPaginatedData().observe(viewLifecycleOwner) { pagingData ->
+                storyListAdapter.submitData(viewLifecycleOwner.lifecycle, pagingData)
+            }
+        }
+    }
+
+    private fun showSnackBar(message: String){
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupSwipeRefreshLayout() {
+
+        swipeRefreshLayout = binding?.swipeRefresh
+
+        swipeRefreshLayout?.setOnRefreshListener {
+            storyListAdapter.refresh()
+        }
+    }
+
+    private fun setupRecyclerView() {
+
+        storyListAdapter = StoryListAdapter()
+
+        val linearLayoutManager = LinearLayoutManager(requireContext())
 
         storyListAdapter.onItemClickListener =
             object : IOnItemClickListener<Story, StoryCardBinding> {
@@ -87,42 +134,42 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
                 }
             }
 
-        val storyListObserver = Observer<NetworkResult<List<Story>?>> { result ->
-            when (result) {
-                is NetworkResult.Loading -> binding?.swipeRefresh?.isRefreshing = true
+        viewLifecycleOwner.lifecycleScope.launch {
 
-                is NetworkResult.Success -> {
+                storyListAdapter.loadStateFlow.collect { loadStates ->
 
-                    result.data?.let {
-                        if (it.isNotEmpty()) {
-                            switchRefreshAndList(false)
+                    swipeRefreshLayout?.isRefreshing = loadStates.refresh is LoadState.Loading
 
-                            storyListAdapter.submitList(it)
-                        } else {
-                            switchRefreshAndList(true)
-                        }
+                    if (loadStates.refresh is LoadState.NotLoading && loadStates.prepend is LoadState.Loading) {
+                        storyList?.scrollToPosition(0)
+                    }
+
+                    val showEmptyList = (loadStates.mediator?.refresh is LoadState.Error && storyListAdapter.itemCount == 0) || (loadStates.mediator?.refresh is LoadState.NotLoading && storyListAdapter.itemCount == 0)
+
+                    binding?.emptyLayout?.isVisible = showEmptyList
+
+                    storyList?.isVisible = !showEmptyList
+
+                    val errorState = loadStates.source.append as? LoadState.Error
+                        ?: loadStates.source.prepend as? LoadState.Error
+                        ?: loadStates.append as? LoadState.Error
+                        ?: loadStates.prepend as? LoadState.Error
+
+                    errorState?.let { state ->
+
+                        showSnackBar(state.error.toString())
                     }
                 }
-                is NetworkResult.Error -> {
-                    binding?.root?.let {
-                        Snackbar.make(it, result.message, Snackbar.LENGTH_SHORT).show()
-                    }
-
-                    binding?.storyList?.adapter?.itemCount?.let {
-                        if (it == 0) {
-                            switchRefreshAndList(true)
-                        } else {
-                            switchRefreshAndList(false)
-                        }
-                    }
-                }
-            }
         }
 
-        storyViewModel.loadStoryState.observe(viewLifecycleOwner, storyListObserver)
+        storyList?.apply {
+            adapter = storyListAdapter.withLoadStateFooter(
+                footer = LoadingStateAdapter {
+                    storyListAdapter.retry()
+                }
+            )
 
-        binding?.storyList?.apply {
-            adapter = storyListAdapter
+            layoutManager = linearLayoutManager
 
             postponeEnterTransition()
 
@@ -131,32 +178,6 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
                     startPostponedEnterTransition()
                     true
                 }
-        }
-
-        swipeRefreshLayout?.setOnRefreshListener(this)
-    }
-
-    private fun switchRefreshAndList(isEmptyList: Boolean) {
-
-        if (isEmptyList) {
-
-            binding?.apply {
-                swipeRefreshLayout?.isRefreshing = false
-
-                storyList.visibility = View.GONE
-
-                emptyLayout.visibility = View.VISIBLE
-            }
-
-        } else {
-
-            binding?.apply {
-                swipeRefresh.isRefreshing = false
-
-                storyList.visibility = View.VISIBLE
-
-                emptyLayout.visibility = View.GONE
-            }
         }
     }
 
@@ -172,7 +193,7 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
             setNavigationOnClickListener { navController.navigateUp() }
         }
 
-        binding?.toolbarFragment?.inflateMenu(R.menu.settings_menu)
+        binding?.toolbarFragment?.inflateMenu(R.menu.home_menu)
 
         binding?.toolbarFragment?.setOnMenuItemClickListener(this)
     }
@@ -183,10 +204,8 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
         _binding = null
 
         swipeRefreshLayout = null
-    }
 
-    override fun onRefresh() {
-        storyViewModel.getAllStories()
+        storyList = null
     }
 
     override fun onClick(view: View) {
@@ -209,6 +228,14 @@ class HomeFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, View.OnCl
                     HomeFragmentDirections.actionHomeFragmentToSettingFragment()
 
                 navController.navigate(actionToSettingsFragment)
+
+                true
+            }
+
+            R.id.explore -> {
+                val actionToMapsFragment = HomeFragmentDirections.actionHomeFragmentToMapsFragment()
+
+                navController.navigate(actionToMapsFragment)
 
                 true
             }

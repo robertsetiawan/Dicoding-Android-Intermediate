@@ -12,6 +12,9 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="18" />
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -29,9 +32,14 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.StoryApp">
+        android:theme="@style/Theme.StoryApp"
+        android:usesCleartextTraffic="true">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDXj8obVWWd7swrMe6TWh3irXNyMo5SnsA" />
+
         <receiver
-            android:name=".StackStoryWidget"
+            android:name=".widget.StackStoryWidget"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -43,8 +51,12 @@
         </receiver>
 
         <service
-            android:name="com.robertas.storyapp.StackStoryService"
+            android:name=".widget.StackStoryService"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <activity
+            android:name=".views.HiltTestActivity"
+            android:exported="false" />
 
         <activity
             android:name=".views.MainActivity"
