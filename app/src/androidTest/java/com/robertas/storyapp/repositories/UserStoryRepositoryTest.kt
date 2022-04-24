@@ -17,13 +17,14 @@ import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.models.network.StoryNetwork
 import com.robertas.storyapp.utils.StoryNetworkMapper
+import dagger.hilt.android.testing.HiltAndroidRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -158,7 +159,7 @@ class UserStoryRepositoryTest {
     }
 
     @Test
-    fun whenErrorRefreshPaginatedDataIsSuccess() = runTest {
+    fun whenErrorRefreshPaginatedData() = runTest {
 
         val user = DataDummy.generateUserDummy()
 

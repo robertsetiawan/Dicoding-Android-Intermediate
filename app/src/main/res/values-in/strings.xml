@@ -41,7 +41,7 @@
     <string name="hybrid_type">Tampilan Hibrid</string>
     <string name="satellite_type">Tampilan satelit</string>
     <string name="terrain_type">Tampilan medan</string>
-    <string name="retry">Retry</string>
+    <string name="retry">Ulangi</string>
     <string name="please_turn_on_gps">Anda harus mengaktifkan GPS!</string>
-    <string name="last_location_is_null">Last location is null</string>
+    <string name="last_location_is_null">Lokasi terakhir tidak ditemukan</string>
 </resources>

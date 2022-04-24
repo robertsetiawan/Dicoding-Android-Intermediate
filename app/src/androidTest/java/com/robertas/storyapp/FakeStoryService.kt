@@ -12,7 +12,7 @@ class FakeStoryService(private val isErrorScenario: Boolean): IStoryService {
     }
 
     override suspend fun register(name: String, email: String, password: String): UserResponse {
-        return DataDummy.generateBaseResponseDummy()
+        return DataDummy.generateBaseResponseDummy(isErrorScenario)
     }
 
     override suspend fun postStory(

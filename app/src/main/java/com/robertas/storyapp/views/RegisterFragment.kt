@@ -24,7 +24,6 @@ import com.robertas.storyapp.views.components.CustomNameEditText
 import com.robertas.storyapp.views.components.CustomPasswordEditText
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment(), View.OnClickListener {
@@ -154,12 +153,12 @@ class RegisterFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    private fun setLoadingAndButtonVisibility(isEnable: Boolean) {
-        binding?.apply {
-            registerBtn.isVisible = isEnable
+    private fun setButtonVisibility(isEnable: Boolean) {
+        binding?.registerBtn?.isVisible = isEnable
+    }
 
-            progressLoading.isVisible = isVisible
-        }
+    private fun setLoadingVisibility(isLoading: Boolean) {
+        binding?.progressLoading?.isVisible = isLoading
     }
 
     private fun showSnackBar(message: String) {
@@ -178,12 +177,16 @@ class RegisterFragment : Fragment(), View.OnClickListener {
                 .collect { result ->
                     when (result) {
                         is NetworkResult.Loading -> {
-                            setLoadingAndButtonVisibility(false)
+                            setButtonVisibility(false)
+
+                            setLoadingVisibility(true)
                         }
 
                         is NetworkResult.Success -> {
 
-                            setLoadingAndButtonVisibility(true)
+                            setButtonVisibility(true)
+
+                            setLoadingVisibility(false)
 
                             showSnackBar(getString(R.string.success_registration))
 
@@ -194,7 +197,9 @@ class RegisterFragment : Fragment(), View.OnClickListener {
                         }
 
                         is NetworkResult.Error -> {
-                            setLoadingAndButtonVisibility(true)
+                            setButtonVisibility(true)
+
+                            setLoadingVisibility(false)
 
                             showSnackBar(result.message)
                         }

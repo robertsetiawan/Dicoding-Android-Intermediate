@@ -10,7 +10,7 @@ abstract class UserRepository: BaseRepository<User, UserNetwork>() {
 
     abstract val pref: SharedPreferences
 
-    abstract suspend fun login(email: String, password: String): Flow<NetworkResult<User?>>
+    abstract suspend fun login(email: String, password: String): Flow<NetworkResult<User>>
 
     abstract suspend fun register(name: String, email: String, password: String): Flow<NetworkResult<Boolean>>
 

@@ -1,14 +1,15 @@
 package com.robertas.storyapp.data
 
-import android.content.SharedPreferences
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import androidx.room.withTransaction
-import com.robertas.storyapp.abstractions.*
-import com.robertas.storyapp.models.domain.Story
+import com.robertas.storyapp.abstractions.IDomainMapper
+import com.robertas.storyapp.abstractions.IStoryService
+import com.robertas.storyapp.abstractions.StoryDatabase
 import com.robertas.storyapp.models.domain.RemoteKeys
+import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.network.StoryNetwork
 
 @OptIn(ExperimentalPagingApi::class)

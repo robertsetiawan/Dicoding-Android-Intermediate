@@ -82,8 +82,8 @@ object DataDummy {
         }
     }
 
-    fun generateBaseResponseDummy(): UserResponse {
-        return UserResponse("ok", true, null)
+    fun generateBaseResponseDummy(isError: Boolean): UserResponse {
+        return if (!isError) UserResponse("ok", false, null ) else UserResponse("error", true, null)
     }
 
     fun generateDummyToken(): String {

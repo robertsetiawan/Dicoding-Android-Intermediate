@@ -3,7 +3,6 @@ package com.robertas.storyapp.views
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -36,7 +35,6 @@ import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.viewmodels.MapsViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint

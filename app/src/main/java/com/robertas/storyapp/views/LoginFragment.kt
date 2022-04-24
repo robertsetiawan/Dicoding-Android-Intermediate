@@ -21,7 +21,6 @@ import com.robertas.storyapp.models.enums.NetworkResult
 import com.robertas.storyapp.viewmodels.UserViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -156,7 +155,7 @@ class LoginFragment : Fragment(), View.OnClickListener {
 
                                 setLoadingStatus(false)
 
-                                showSnackBar(getString(R.string.welcome, result.data?.name))
+                                showSnackBar(getString(R.string.welcome, result.data.name))
 
                                 val actionToHomeFragment =
                                     LoginFragmentDirections.actionLoginFragmentToHomeFragment()

@@ -1,6 +1,5 @@
 package com.robertas.storyapp.abstractions
 
-import androidx.lifecycle.LiveData
 import androidx.paging.PagingData
 import com.google.android.gms.maps.model.LatLng
 import com.robertas.storyapp.models.domain.Story

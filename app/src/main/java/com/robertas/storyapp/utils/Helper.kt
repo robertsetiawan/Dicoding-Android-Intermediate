@@ -35,8 +35,6 @@ fun parseTime(unformattedTime: String): Date?{
     return formatter.parse(unformattedTime)
 }
 
-fun ViewModel.getViewModelScope(coroutineScope: CoroutineScope?) = coroutineScope?: this.viewModelScope
-
 
 fun formatTime(unformattedTime: Long, format: String): String {
     return SimpleDateFormat(

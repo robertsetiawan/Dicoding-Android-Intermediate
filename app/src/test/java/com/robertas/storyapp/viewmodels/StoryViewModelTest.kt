@@ -1,6 +1,5 @@
 package com.robertas.storyapp.viewmodels
 
-import android.location.Location
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.paging.AsyncPagingDataDiffer
 import androidx.paging.PagingData
@@ -8,7 +7,6 @@ import androidx.recyclerview.widget.ListUpdateCallback
 import com.google.android.gms.maps.model.LatLng
 import com.robertas.storyapp.CoroutinesTestRule
 import com.robertas.storyapp.DataDummy
-import com.robertas.storyapp.MainCoroutineRule
 import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.adapters.StoryListAdapter
@@ -17,13 +15,8 @@ import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.CameraMode
 import com.robertas.storyapp.models.enums.NetworkResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -232,12 +225,12 @@ class StoryViewModelTest {
 
         Mockito.verify(userAccountRepository).setCameraMode(expectedCameraMode)
     }
+
+    private val noopListUpdateCallback = object : ListUpdateCallback {
+        override fun onInserted(position: Int, count: Int) {}
+        override fun onRemoved(position: Int, count: Int) {}
+        override fun onMoved(fromPosition: Int, toPosition: Int) {}
+        override fun onChanged(position: Int, count: Int, payload: Any?) {}
+    }
 }
 
-
-val noopListUpdateCallback = object : ListUpdateCallback {
-    override fun onInserted(position: Int, count: Int) {}
-    override fun onRemoved(position: Int, count: Int) {}
-    override fun onMoved(fromPosition: Int, toPosition: Int) {}
-    override fun onChanged(position: Int, count: Int, payload: Any?) {}
-}

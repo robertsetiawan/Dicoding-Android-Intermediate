@@ -27,12 +27,8 @@ import com.robertas.storyapp.adapters.StoryListAdapter
 import com.robertas.storyapp.databinding.FragmentHomeBinding
 import com.robertas.storyapp.databinding.StoryCardBinding
 import com.robertas.storyapp.models.domain.Story
-import com.robertas.storyapp.utils.EspressoIdlingResource
-import com.robertas.storyapp.utils.wrapEspressoIdlingResource
 import com.robertas.storyapp.viewmodels.StoryViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 

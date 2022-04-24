@@ -12,8 +12,6 @@ import com.robertas.storyapp.abstractions.StoryRepository
 import com.robertas.storyapp.abstractions.UserRepository
 import com.robertas.storyapp.models.domain.Story
 import com.robertas.storyapp.models.enums.NetworkResult
-import com.robertas.storyapp.repositories.UserAccountRepository
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 
 

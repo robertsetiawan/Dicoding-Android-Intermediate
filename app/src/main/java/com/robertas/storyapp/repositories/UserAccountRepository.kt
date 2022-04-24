@@ -21,7 +21,7 @@ class UserAccountRepository @Inject constructor(
     override val pref: SharedPreferences,
     override val networkMapper: IDomainMapper<UserNetwork, User>
 ) : UserRepository() {
-    override suspend fun login(email: String, password: String): Flow<NetworkResult<User?>> = flow {
+    override suspend fun login(email: String, password: String): Flow<NetworkResult<User>> = flow {
 
         emit(NetworkResult.Loading)
 
